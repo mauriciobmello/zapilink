@@ -63,7 +63,10 @@ export default function RequestsList({ bookings, eventTitle }: RequestsListProps
   }
 
   return (
-    <section className="rounded-card bg-white p-6 shadow-card">
+    <section
+      id="solicitacoes"
+      className="scroll-mt-6 rounded-card bg-white p-6 shadow-card"
+    >
       <h2 className="mb-4 text-lg font-bold text-gray-900">Solicitações</h2>
       {error && (
         <div className="mb-4 rounded-card bg-red-50 p-3 text-sm text-red-600">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createBrowserClient } from "@/lib/supabase/client";
 import type {
   AvailabilityException,
@@ -32,6 +32,14 @@ const TIMEZONES = [
   "UTC",
 ];
 
+const SECTIONS = [
+  { id: "configuracao", label: "Configuração" },
+  { id: "google-calendar", label: "Google Calendar" },
+  { id: "regras-disponibilidade", label: "Regras de disponibilidade" },
+  { id: "excecoes", label: "Exceções" },
+  { id: "solicitacoes", label: "Solicitações" },
+];
+
 const inputClass =
   "h-11 w-full rounded-card border border-gray-200 px-4 text-base outline-none focus:border-[#7C3AED] focus:ring-2 focus:ring-[#7C3AED]/20";
 
@@ -41,6 +49,7 @@ interface ScheduleConfigProps {
   initialRules: AvailabilityRule[];
   initialExceptions: AvailabilityException[];
   googleEmail: string | null;
+  requestsSlot?: React.ReactNode;
 }
 
 export default function ScheduleConfig({
@@ -49,6 +58,7 @@ export default function ScheduleConfig({
   initialRules,
   initialExceptions,
   googleEmail: initialGoogleEmail,
+  requestsSlot,
 }: ScheduleConfigProps) {
   const supabase = createBrowserClient();
 
@@ -63,6 +73,33 @@ export default function ScheduleConfig({
     initialGoogleEmail,
   );
   const [googleMsg, setGoogleMsg] = useState<string | null>(null);
+  const [activeSection, setActiveSection] = useState<string>(SECTIONS[0].id);
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const container = contentRef.current;
+    if (!container) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
+        if (visible?.target.id) setActiveSection(visible.target.id);
+      },
+      { rootMargin: "-96px 0px -60% 0px", threshold: 0 },
+    );
+    container.querySelectorAll("section[id]").forEach((section) => {
+      observer.observe(section);
+    });
+    return () => observer.disconnect();
+  }, [requestsSlot]);
+
+  function goToSection(id: string) {
+    setActiveSection(id);
+    document
+      .getElementById(id)
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 
   async function persistEvent(e: React.FormEvent) {
     e.preventDefault();
@@ -201,8 +238,32 @@ export default function ScheduleConfig({
   }
 
   return (
-    <div className="space-y-8">
-      <section className="rounded-card bg-white p-6 shadow-card">
+    <div className="grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)] lg:items-start">
+      <nav className="rounded-card bg-white p-3 shadow-card lg:sticky lg:top-6">
+        <ul className="flex flex-wrap gap-1 lg:flex-col lg:flex-nowrap">
+          {SECTIONS.map((section) => (
+            <li key={section.id}>
+              <button
+                type="button"
+                onClick={() => goToSection(section.id)}
+                className={`w-full rounded-card px-4 py-2.5 text-left text-sm font-medium transition-colors ${
+                  activeSection === section.id
+                    ? "bg-[#7C3AED] text-white"
+                    : "text-gray-600 hover:bg-gray-100"
+                }`}
+              >
+                {section.label}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </nav>
+
+      <div ref={contentRef} className="space-y-8">
+      <section
+        id="configuracao"
+        className="scroll-mt-6 rounded-card bg-white p-6 shadow-card"
+      >
         <h2 className="mb-4 text-lg font-bold text-gray-900">
           Configurações do evento
         </h2>
@@ -329,7 +390,10 @@ export default function ScheduleConfig({
         </form>
       </section>
 
-      <section className="rounded-card bg-white p-6 shadow-card">
+      <section
+        id="google-calendar"
+        className="scroll-mt-6 rounded-card bg-white p-6 shadow-card"
+      >
         <h2 className="mb-4 text-lg font-bold text-gray-900">Google Calendar</h2>
         {googleEmail ? (
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -362,7 +426,10 @@ export default function ScheduleConfig({
         {googleMsg && <p className="mt-2 text-sm text-red-600">{googleMsg}</p>}
       </section>
 
-      <section className="rounded-card bg-white p-6 shadow-card">
+      <section
+        id="regras-disponibilidade"
+        className="scroll-mt-6 rounded-card bg-white p-6 shadow-card"
+      >
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-bold text-gray-900">
             Regras de disponibilidade
@@ -429,7 +496,10 @@ export default function ScheduleConfig({
         </div>
       </section>
 
-      <section className="rounded-card bg-white p-6 shadow-card">
+      <section
+        id="excecoes"
+        className="scroll-mt-6 rounded-card bg-white p-6 shadow-card"
+      >
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-bold text-gray-900">Exceções</h2>
           <button
@@ -520,6 +590,9 @@ export default function ScheduleConfig({
           ))}
         </div>
       </section>
+
+      {requestsSlot}
+      </div>
     </div>
   );
 }

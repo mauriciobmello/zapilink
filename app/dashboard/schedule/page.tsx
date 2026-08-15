@@ -109,11 +109,12 @@ export default async function SchedulePage({
         initialRules={(rules ?? []) as AvailabilityRule[]}
         initialExceptions={(exceptions ?? []) as AvailabilityException[]}
         googleEmail={connection?.google_email ?? null}
-      />
-
-      <RequestsList
-        bookings={(bookings ?? []) as Booking[]}
-        eventTitle={event.title}
+        requestsSlot={
+          <RequestsList
+            bookings={(bookings ?? []) as Booking[]}
+            eventTitle={event.title}
+          />
+        }
       />
     </div>
   );
