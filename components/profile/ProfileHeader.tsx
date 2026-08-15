@@ -1,0 +1,102 @@
+import type { ReactElement } from "react";
+import Image from "next/image";
+import type { Profile, SocialLink } from "@/types/profile";
+import type { ProfileTheme } from "@/lib/profileTheme";
+import {
+  InstagramIcon,
+  TikTokIcon,
+  YouTubeIcon,
+  LinkedInIcon,
+  FacebookIcon,
+  TwitterIcon,
+  GitHubIcon,
+  SiteIcon,
+  EmailIcon,
+} from "@/components/icons";
+
+const platformIcons: Record<string, ReactElement> = {
+  instagram: <InstagramIcon className="h-5 w-5" />,
+  tiktok: <TikTokIcon className="h-5 w-5" />,
+  youtube: <YouTubeIcon className="h-5 w-5" />,
+  linkedin: <LinkedInIcon className="h-5 w-5" />,
+  facebook: <FacebookIcon className="h-5 w-5" />,
+  twitter: <TwitterIcon className="h-5 w-5" />,
+  github: <GitHubIcon className="h-5 w-5" />,
+  site: <SiteIcon className="h-5 w-5" />,
+  email: <EmailIcon className="h-5 w-5" />,
+};
+
+interface ProfileHeaderProps {
+  profile: Profile;
+  theme: ProfileTheme;
+}
+
+export default function ProfileHeader({
+  profile,
+  theme,
+}: ProfileHeaderProps) {
+  const displayName = profile.name || profile.username;
+  const initials = displayName
+    .split(" ")
+    .slice(0, 2)
+    .map((part) => part.charAt(0))
+    .join("")
+    .toUpperCase();
+
+  const socialLinks: SocialLink[] = profile.social_links ?? [];
+
+  return (
+    <header className="flex flex-col items-center px-4 pt-12 text-center sm:pt-16">
+      <div className="rounded-full bg-gradient-to-br from-[var(--theme-primary)] to-[var(--theme-accent)] p-1.5 shadow-cardHover">
+        {profile.photo_url ? (
+          <Image
+            src={profile.photo_url}
+            alt={`Foto de perfil de ${displayName}`}
+            width={120}
+            height={120}
+            priority
+            className="h-24 w-24 rounded-full border-4 border-white object-cover sm:h-28 sm:w-28"
+          />
+        ) : (
+          <div className="flex h-24 w-24 items-center justify-center rounded-full border-4 border-white bg-white text-2xl font-bold text-[var(--theme-primary)] sm:h-28 sm:w-28">
+            {initials}
+          </div>
+        )}
+      </div>
+
+      <h1 className="mt-5 text-3xl font-bold text-gray-900 sm:text-4xl">
+        {displayName}
+      </h1>
+      <p className="mt-1 text-sm font-semibold text-[var(--theme-primary)]">
+        @{profile.username}
+      </p>
+      {profile.description && (
+        <div 
+          className="mt-3 max-w-md text-base text-gray-600 prose prose-sm max-w-none"
+          dangerouslySetInnerHTML={{ __html: profile.description }}
+        />
+      )}
+
+      {socialLinks.length > 0 && (
+        <nav aria-label="Redes sociais" className="mt-5 flex gap-3">
+          {socialLinks.map((link) => (
+            <a
+              key={`${link.platform}-${link.url}`}
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`${link.platform} de ${displayName}`}
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 shadow-card transition-colors hover:border-[var(--theme-primary)] hover:text-[var(--theme-primary)]"
+            >
+              {platformIcons[link.platform] ?? (
+                <span className="text-xs font-bold uppercase">
+                  {link.platform.charAt(0)}
+                </span>
+              )}
+            </a>
+          ))}
+        </nav>
+      )}
+    </header>
+  );
+}
