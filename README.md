@@ -146,9 +146,21 @@ zapilink/
 
 ## 🚀 Deployment
 
-### Docker (Recommended for Production)
+### Dokploy (Recommended for Production)
 
-The project includes Docker support for easy deployment:
+Dokploy is a self-hosted PaaS that simplifies Docker deployment with automatic Git integration:
+
+1. Install Dokploy on your server: `curl -sSL https://dokploy.com/install.sh | sh`
+2. Connect your GitHub repository
+3. Configure environment variables in Dokploy dashboard
+4. Deploy with Docker Compose or Dockerfile
+5. Automatic SSL via Traefik
+
+For detailed Dokploy deployment instructions, see [Dokploy Deployment Guide](docs/DOKPLOY_DEPLOYMENT.md).
+
+### Docker
+
+The project includes Docker support for manual deployment:
 
 ```bash
 # Using Docker Compose
