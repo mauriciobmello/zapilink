@@ -146,7 +146,24 @@ zapilink/
 
 ## 🚀 Deployment
 
-### Vercel (Recommended)
+### Docker (Recommended for Production)
+
+The project includes Docker support for easy deployment:
+
+```bash
+# Using Docker Compose
+cp .env.docker.example .env
+# Edit .env with your credentials
+docker-compose up -d
+
+# Using Docker directly
+docker build -t zapilink:latest .
+docker run -d -p 3000:3000 --env-file .env zapilink:latest
+```
+
+For detailed Docker deployment instructions, see [Docker Deployment Guide](docs/DOCKER_DEPLOYMENT.md).
+
+### Vercel
 
 1. Connect your GitHub repository to Vercel
 2. Configure environment variables in Vercel dashboard
