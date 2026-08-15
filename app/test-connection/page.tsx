@@ -3,9 +3,27 @@
 import { useEffect, useState } from "react";
 import { createBrowserClient } from "@/lib/supabase/client";
 
+interface TestDetails {
+  envCheck?: {
+    hasUrl: boolean;
+    hasAnonKey: boolean;
+    url: string;
+    keyPrefix: string;
+  };
+  clientCreated?: boolean;
+  session?: string;
+  sessionError?: string;
+  user?: string;
+  userError?: string;
+  userId?: string;
+  dbConnection?: string;
+  dbError?: string;
+  error?: string;
+}
+
 export default function TestConnection() {
   const [status, setStatus] = useState("Inicializando...");
-  const [details, setDetails] = useState<any>(null);
+  const [details, setDetails] = useState<TestDetails>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -24,7 +42,7 @@ export default function TestConnection() {
         };
         
         console.log("Verificação de ambiente:", envCheck);
-        setDetails(prev => ({ ...prev, envCheck }));
+        setDetails((prev: TestDetails) => ({ ...prev, envCheck }));
 
         if (!envCheck.hasUrl || !envCheck.hasAnonKey) {
           setStatus("❌ VARIÁVEIS DE AMBIENTE FALTANDO");
@@ -35,12 +53,12 @@ export default function TestConnection() {
         // Teste 2: Criar cliente Supabase
         const supabase = createBrowserClient();
         console.log("Cliente Supabase criado");
-        setDetails(prev => ({ ...prev, clientCreated: true }));
+        setDetails((prev: TestDetails) => ({ ...prev, clientCreated: true }));
 
         // Teste 3: Verificar sessão atual
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         console.log("Sessão atual:", session ? "EXISTS" : "NONE", sessionError);
-        setDetails(prev => ({ 
+        setDetails((prev: TestDetails) => ({ 
           ...prev, 
           session: session ? "EXISTS" : "NONE",
           sessionError: sessionError?.message
@@ -49,7 +67,7 @@ export default function TestConnection() {
         // Teste 4: Verificar usuário atual
         const { data: { user }, error: userError } = await supabase.auth.getUser();
         console.log("Usuário atual:", user ? "LOGGED_IN" : "NOT_LOGGED_IN", userError);
-        setDetails(prev => ({ 
+        setDetails((prev: TestDetails) => ({ 
           ...prev, 
           user: user ? "LOGGED_IN" : "NOT_LOGGED_IN",
           userError: userError?.message,
@@ -63,7 +81,7 @@ export default function TestConnection() {
           .limit(1);
         
         console.log("Teste de banco:", profileTest, profileError);
-        setDetails(prev => ({ 
+        setDetails((prev: TestDetails) => ({ 
           ...prev, 
           dbConnection: profileError ? "FAILED" : "SUCCESS",
           dbError: profileError?.message
@@ -78,7 +96,7 @@ export default function TestConnection() {
       } catch (error) {
         console.error("Erro no teste:", error);
         setStatus("❌ ERRO NO TESTE");
-        setDetails(prev => ({ 
+        setDetails((prev: TestDetails) => ({ 
           ...prev, 
           error: error instanceof Error ? error.message : "Erro desconhecido"
         }));
