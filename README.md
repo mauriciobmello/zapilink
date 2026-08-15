@@ -22,7 +22,7 @@ Next.js application with Supabase backend for profile management and scheduling.
 
 ## 📋 Prerequisites
 
-- Node.js 18+
+- Node.js 20.9.0+ (required for Next.js 16)
 - Supabase project with PostgreSQL database
 - Google Cloud project (for Google Calendar integration)
 - Resend account (for email notifications)
