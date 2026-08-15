@@ -111,7 +111,49 @@ NEXT_PUBLIC_SITE_URL=https://yourdomain.com
    - Clique em **Deploy**
    - Dokploy fará o build e deployment automaticamente
 
-### Opção 2: Dockerfile
+### Opção 2: Dockerfile Simplificado (Recomendado para Dokploy)
+
+Se o Dockerfile padrão falhar, use o `Dockerfile.simple`:
+
+1. **Criar Aplicação:**
+   - Clique em **New Application**
+   - Nome: `zapilink`
+   - Tipo: **Dockerfile**
+   - Repositório: Seu repositório GitHub
+
+2. **Configurar Build:**
+   - Branch: `main`
+   - Dockerfile Path: `Dockerfile.simple`
+   - Context: `/`
+   - Build Args: `NODE_ENV=production`
+
+3. **Configurar Ambiente:**
+   - Porta: `3000`
+   - Variáveis de ambiente
+
+4. **Deploy:**
+   - Clique em **Deploy**
+
+### Opção 3: Dockerfile Padrão
+
+1. **Criar Aplicação:**
+   - Clique em **New Application**
+   - Nome: `zapilink`
+   - Tipo: **Dockerfile**
+   - Repositório: Seu repositório GitHub
+
+2. **Configurar Build:**
+   - Branch: `main`
+   - Dockerfile Path: `Dockerfile`
+   - Context: `/`
+   - Build Args: `NODE_ENV=production`
+
+3. **Configurar Ambiente:**
+   - Porta: `3000`
+   - Variáveis de ambiente
+
+4. **Deploy:**
+   - Clique em **Deploy**
 
 1. **Criar Aplicação:**
    - Clique em **New Application**
