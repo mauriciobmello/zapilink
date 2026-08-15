@@ -1,55 +1,29 @@
-# Stage 1: Dependencies
-FROM node:18-alpine AS deps
+# Dockerfile for Zapilink - Optimized for Dokploy deployment
+FROM node:18-alpine
 
-# Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
+WORKDIR /app
+
+# Install libc6-compat for Alpine compatibility
 RUN apk add --no-cache libc6-compat
 
-WORKDIR /app
-
-# Install dependencies based on the preferred package manager
+# Copy package files
 COPY package.json package-lock.json* ./
+
+# Install dependencies
 RUN npm ci
 
-# Stage 2: Builder
-FROM node:18-alpine AS builder
-
-WORKDIR /app
-
-COPY --from=deps /app/node_modules ./node_modules
+# Copy application files
 COPY . .
 
-# Set environment variables for build
-ENV NEXT_TELEMETRY_DISABLED 1
-ENV NODE_ENV production
+# Set environment variables
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
 
 # Build the application
 RUN npm run build
 
-# Stage 3: Runner
-FROM node:18-alpine AS runner
-
-WORKDIR /app
-
-ENV NODE_ENV production
-ENV NEXT_TELEMETRY_DISABLED 1
-
-# Create a non-root user
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
-
-# Copy necessary files
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
-
-# Set correct permissions
-RUN chown -R nextjs:nodejs /app
-
-USER nextjs
-
+# Expose port
 EXPOSE 3000
 
-ENV PORT 3000
-ENV HOSTNAME "0.0.0.0"
-
-CMD ["node", "server.js"]
+# Start the application
+CMD ["npm", "start"]

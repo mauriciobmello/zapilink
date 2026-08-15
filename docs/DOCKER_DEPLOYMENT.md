@@ -110,6 +110,14 @@ docker run -d \
   zapilink:latest
 ```
 
+## 🎯 Nota sobre o Dockerfile
+
+O Dockerfile foi simplificado para melhor compatibilidade com Dokploy:
+- Single-stage build
+- Inclui libc6-compat para Alpine
+- Configurado com NODE_ENV=production
+- Otimizado para deployment em plataformas PaaS
+
 ### 4. Comandos Úteis
 
 ```bash
