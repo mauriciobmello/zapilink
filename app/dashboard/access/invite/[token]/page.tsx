@@ -31,7 +31,7 @@ export default function AcceptInvitePage() {
           return;
         }
 
-        // Validar o token do convite
+        // Validar o token do convite para o usuário autenticado
         const { data: access } = await supabase
           .from("profile_access")
           .select(`
@@ -40,6 +40,7 @@ export default function AcceptInvitePage() {
           `)
           .eq("invite_token", token)
           .eq("status", "pending")
+          .eq("grantee_user_id", user.id)
           .single();
 
         if (!access) {
