@@ -1,3 +1,5 @@
+"use client";
+
 import type { CSSProperties } from "react";
 import type { Block, ButtonItem } from "@/types/block";
 import type { Profile } from "@/types/profile";
