@@ -15,7 +15,7 @@ export const metadata: Metadata = {
     title: "Zapilink",
   },
   icons: {
-    icon: "/icons/icon-192x192.png",
+    icon: "/icon-zapilink.png",
     apple: "/icons/apple-touch-icon.png",
   },
 };

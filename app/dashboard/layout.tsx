@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import AuthGuard from "@/components/shared/AuthGuard";
+import Logo from "@/components/shared/Logo";
 import LogoutButton from "@/components/dashboard/LogoutButton";
 import ProfileSwitcher from "@/components/dashboard/ProfileSwitcher";
 
@@ -32,7 +33,9 @@ function DashboardNav() {
   return (
     <nav className="border-b border-gray-100 bg-white">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-4">
-        <span className="text-lg font-bold text-[#7C3AED]">ZAPILINK</span>
+        <Link href="/dashboard" aria-label="ZAPILINK">
+          <Logo height={30} priority />
+        </Link>
         {showNavElements && (
           <div className="flex flex-wrap items-center gap-1">
             {NAV_LINKS.map((link) => (
