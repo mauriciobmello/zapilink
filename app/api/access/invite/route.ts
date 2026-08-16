@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { requireUser } from "@/lib/auth";
 import { securityLogger } from "@/lib/security-logger";
 import { sendInviteEmail } from "@/lib/access/invite-email";
 
@@ -7,12 +8,8 @@ export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
   try {
+    const user = await requireUser();
     const supabase = createAdminClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
-    }
 
     const body = await request.json();
     const { profileId, email, permissions } = body;
