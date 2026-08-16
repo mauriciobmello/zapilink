@@ -42,7 +42,7 @@ export default function EditPageContent({ profile, initialBlocks }: EditPageCont
   return (
     <div className="grid gap-8 lg:grid-cols-[1fr_480px]">
       <div>
-        <nav className="mb-6 flex gap-2" aria-label="Seções de edição">
+        <nav className="mb-6 flex flex-wrap items-center gap-2" aria-label="Seções de edição">
           {canViewProfile && (
             <Link
               href={tabLink("perfil")}
@@ -89,6 +89,14 @@ export default function EditPageContent({ profile, initialBlocks }: EditPageCont
               }`}
             >
               Tema
+            </Link>
+          )}
+          {isOwner && (
+            <Link
+              href={`/dashboard/access?profileId=${profile.id}`}
+              className="ml-auto rounded-card border border-[#7C3AED] bg-purple-50 px-4 py-2 text-sm font-medium text-[#7C3AED] transition-colors hover:bg-purple-100"
+            >
+              Gerenciar acessos
             </Link>
           )}
         </nav>
