@@ -148,3 +148,38 @@ export async function getAccessibleProfiles(userId: string) {
     delegated: delegatedWithPermissions,
   };
 }
+
+export interface ResolveProfileAccessResult {
+  role: "owner" | "delegate";
+  permissions: Permission[];
+  profileId: string;
+}
+
+/**
+ * Resolve o acesso do usuário a um perfil incluindo permissões
+ */
+export async function resolveProfileAccess(
+  userId: string,
+  profileId: string
+): Promise<ResolveProfileAccessResult | null> {
+  const access = await canAccessProfile(userId, profileId);
+  if (!access.allowed) return null;
+
+  return {
+    role: access.role as "owner" | "delegate",
+    permissions: access.permissions as Permission[],
+    profileId,
+  };
+}
+
+/**
+ * Verifica se o usuário tem uma permissão específica no perfil
+ */
+export async function hasPermission(
+  userId: string,
+  profileId: string,
+  permission: Permission
+): Promise<boolean> {
+  const access = await canAccessProfile(userId, profileId, permission);
+  return access.allowed;
+}

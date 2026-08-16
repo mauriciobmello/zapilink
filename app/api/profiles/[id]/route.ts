@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { requireUser } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/auth";
+import { resolveProfileAccess } from "@/lib/access/authorization";
 import { securityLogger } from "@/lib/security-logger";
 
 export const dynamic = "force-dynamic";
@@ -9,8 +10,24 @@ export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const user = await requireUser();
+  const user = await getCurrentUser();
+  if (!user) {
+    return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
+  }
+
   const { id: profileId } = await params;
+
+  const access = await resolveProfileAccess(user.id, profileId);
+  if (!access || access.role !== "owner") {
+    await securityLogger.warn("Unauthorized profile deletion attempt", {
+      userId: user.id,
+      profileId,
+    });
+    return NextResponse.json(
+      { error: "Você não tem permissão para excluir este perfil" },
+      { status: 403 }
+    );
+  }
 
   const admin = createAdminClient();
 

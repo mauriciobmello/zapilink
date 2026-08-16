@@ -60,6 +60,11 @@ export default function ProfileForm({ initialData, initialBlocks, canEdit = true
   }, []);
 
   async function save() {
+    if (!canEdit) {
+      setErrors((prev) => ({ ...prev, general: "Você não tem permissão para editar este perfil." }));
+      return;
+    }
+
     const validation = validate(form);
     setErrors(validation);
     if (Object.keys(validation).length > 0) return;
@@ -67,26 +72,29 @@ export default function ProfileForm({ initialData, initialBlocks, canEdit = true
     if (serialize(form) === lastSavedRef.current) return;
 
     setSaving(true);
-    const supabase = createBrowserClient();
-    const { error } = await supabase
-      .from("profiles")
-      .update({
+    const res = await fetch(`/api/profiles/${form.id}/update`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
         username: form.username,
         name: form.name,
         description: form.description,
         photo_url: form.photo_url,
-      })
-      .eq("id", form.id);
+      }),
+    });
+    const data = await res.json();
     setSaving(false);
 
-    if (error) {
-      if (error.message.includes("duplicate") || error.code === "23505") {
+    if (!res.ok) {
+      if (res.status === 409 || res.status === 400) {
         setErrors((prev) => ({
           ...prev,
-          username: "Este username já está em uso.",
+          username: data.error || "Este username já está em uso.",
         }));
+      } else if (res.status === 403) {
+        setErrors((prev) => ({ ...prev, general: data.error || "Sem permissão." }));
       } else {
-        setErrors((prev) => ({ ...prev, general: error.message }));
+        setErrors((prev) => ({ ...prev, general: data.error || "Erro ao salvar." }));
       }
       return;
     }
