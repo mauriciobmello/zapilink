@@ -22,6 +22,7 @@ export default function AccessManagementPage() {
   const [invitePermissions, setInvitePermissions] = useState<Permission[]>([]);
   const [inviting, setInviting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   const availablePermissions = getAllPermissions();
 
@@ -91,6 +92,7 @@ export default function AccessManagementPage() {
     const supabase = createBrowserClient();
     setInviting(true);
     setError(null);
+    setSuccess(null);
 
     try {
       const res = await fetch("/api/access/invite", {
@@ -131,6 +133,7 @@ export default function AccessManagementPage() {
       setShowInviteModal(false);
       setInviteEmail("");
       setInvitePermissions([]);
+      setSuccess(`Convite enviado com sucesso para ${inviteEmail}`);
       setInviting(false);
     } catch (err) {
       console.error("Error inviting admin:", err);
@@ -210,6 +213,13 @@ export default function AccessManagementPage() {
 
   return (
     <div className="max-w-4xl mx-auto py-8">
+      <button
+        onClick={() => router.push(`/dashboard/edit?profileId=${profileId}`)}
+        className="mb-4 inline-flex items-center gap-1 rounded-card border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50"
+      >
+        ← Voltar
+      </button>
+
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
@@ -226,6 +236,18 @@ export default function AccessManagementPage() {
           + Adicionar administrador
         </button>
       </div>
+
+      {success && (
+        <div className="mb-4 rounded-card bg-green-50 p-4 text-sm text-green-700">
+          {success}
+        </div>
+      )}
+
+      {error && !showInviteModal && (
+        <div className="mb-4 rounded-card bg-red-50 p-4 text-sm text-red-700">
+          {error}
+        </div>
+      )}
 
       <div className="space-y-4">
         {accessList.length === 0 ? (
