@@ -8,12 +8,13 @@ import SocialLinksInput from "./SocialLinksInput";
 
 interface SocialLinksSectionProps {
   profile: Profile;
+  canEdit?: boolean;
 }
 
 const URL_REGEX = /^https?:\/\/.+\..+/;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export default function SocialLinksSection({ profile }: SocialLinksSectionProps) {
+export default function SocialLinksSection({ profile, canEdit = true }: SocialLinksSectionProps) {
   const router = useRouter();
   const [socialLinks, setSocialLinks] = useState(profile.social_links ?? []);
   const [saving, setSaving] = useState(false);
@@ -77,6 +78,7 @@ export default function SocialLinksSection({ profile }: SocialLinksSectionProps)
         <SocialLinksInput
           value={socialLinks}
           onChange={setSocialLinks}
+          disabled={!canEdit}
         />
         {Object.keys(errors)
           .filter((key) => key.startsWith("link-"))
@@ -99,7 +101,7 @@ export default function SocialLinksSection({ profile }: SocialLinksSectionProps)
             ? "Salvando automaticamente..."
             : savedAt
               ? `Salvo às ${savedAt}`
-              : "Salvamento automático ativo"}
+              : canEdit ? "Salvamento automático ativo" : "Modo leitura"}
         </span>
       </div>
     </div>

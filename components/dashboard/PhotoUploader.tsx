@@ -9,12 +9,14 @@ interface PhotoUploaderProps {
   userId: string;
   photoUrl: string | null;
   onChange: (url: string) => void;
+  disabled?: boolean;
 }
 
 export default function PhotoUploader({
   userId,
   photoUrl,
   onChange,
+  disabled = false,
 }: PhotoUploaderProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -76,7 +78,7 @@ export default function PhotoUploader({
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
-          disabled={uploading}
+          disabled={uploading || disabled}
           className="h-11 rounded-card border border-gray-200 bg-white px-4 text-sm font-medium text-gray-700 transition-colors hover:border-[#7C3AED] disabled:opacity-50"
         >
           {uploading ? "Enviando..." : "Enviar imagem"}
@@ -86,6 +88,7 @@ export default function PhotoUploader({
           type="file"
           accept="image/*"
           className="hidden"
+          disabled={disabled}
           onChange={(e) => handleFile(e.target.files?.[0])}
         />
       </div>

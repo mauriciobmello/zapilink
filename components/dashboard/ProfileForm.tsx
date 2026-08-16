@@ -31,12 +31,13 @@ function validate(data: Profile): Record<string, string> {
 interface ProfileFormProps {
   initialData: Profile;
   initialBlocks?: Block[];
+  canEdit?: boolean;
 }
 
 const inputClass =
   "h-11 w-full rounded-card border border-gray-200 px-4 text-base outline-none focus:border-[#7C3AED] focus:ring-2 focus:ring-[#7C3AED]/20";
 
-export default function ProfileForm({ initialData, initialBlocks }: ProfileFormProps) {
+export default function ProfileForm({ initialData, initialBlocks, canEdit = true }: ProfileFormProps) {
   const router = useRouter();
   const [form, setForm] = useState<Profile>(initialData);
   const [saving, setSaving] = useState(false);
@@ -162,6 +163,7 @@ export default function ProfileForm({ initialData, initialBlocks }: ProfileFormP
             value={form.name ?? ""}
             onChange={(e) => update({ name: e.target.value })}
             className={inputClass}
+            disabled={!canEdit}
           />
           {errors.name && (
             <p className="mt-1 text-sm text-red-600">{errors.name}</p>
@@ -183,6 +185,7 @@ export default function ProfileForm({ initialData, initialBlocks }: ProfileFormP
             onChange={(e) => update({ username: e.target.value })}
             className={inputClass}
             aria-invalid={Boolean(errors.username)}
+            disabled={!canEdit}
           />
           {errors.username ? (
             <p className="mt-1 text-sm text-red-600">{errors.username}</p>
@@ -204,6 +207,7 @@ export default function ProfileForm({ initialData, initialBlocks }: ProfileFormP
             content={form.description ?? ""}
             onChange={(content) => update({ description: content })}
             maxLength={500}
+            disabled={!canEdit}
           />
           {errors.description && (
             <p className="mt-1 text-sm text-red-600">{errors.description}</p>
@@ -221,6 +225,7 @@ export default function ProfileForm({ initialData, initialBlocks }: ProfileFormP
             userId={form.user_id}
             photoUrl={form.photo_url}
             onChange={(photo_url) => update({ photo_url })}
+            disabled={!canEdit}
           />
           <label
             htmlFor="photo_url"
@@ -235,6 +240,7 @@ export default function ProfileForm({ initialData, initialBlocks }: ProfileFormP
             onChange={(e) => update({ photo_url: e.target.value })}
             placeholder="https://..."
             className={inputClass}
+            disabled={!canEdit}
           />
         </div>
       </section>
@@ -248,7 +254,7 @@ export default function ProfileForm({ initialData, initialBlocks }: ProfileFormP
       <div className="flex flex-wrap items-center gap-3">
         <button
           type="submit"
-          disabled={saving}
+          disabled={saving || !canEdit}
           className="h-12 rounded-card bg-gradient-to-br from-[#7C3AED] to-[#F97316] px-6 font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-60"
         >
           {saving ? "Salvando..." : "Salvar"}
@@ -264,7 +270,7 @@ export default function ProfileForm({ initialData, initialBlocks }: ProfileFormP
             ? "Salvando automaticamente..."
             : savedAt
               ? `Salvo às ${savedAt}`
-              : "Salvamento automático ativo"}
+              : canEdit ? "Salvamento automático ativo" : "Modo leitura"}
         </span>
       </div>
     </form>

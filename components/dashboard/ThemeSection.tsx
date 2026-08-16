@@ -9,9 +9,10 @@ import ColorPicker from "./ColorPicker";
 
 interface ThemeSectionProps {
   profile: Profile;
+  canEdit?: boolean;
 }
 
-export default function ThemeSection({ profile }: ThemeSectionProps) {
+export default function ThemeSection({ profile, canEdit = true }: ThemeSectionProps) {
   const router = useRouter();
   const [themeColor, setThemeColor] = useState(profile.theme_color ?? "#7C3AED");
   const [themeAccent, setThemeAccent] = useState(profile.theme_accent ?? "#F97316");
@@ -77,6 +78,7 @@ export default function ThemeSection({ profile }: ThemeSectionProps) {
           label="Cor primária"
           value={themeColor}
           onChange={setThemeColor}
+          disabled={!canEdit}
         />
         {errors.theme_color && (
           <p className="text-sm text-red-600">{errors.theme_color}</p>
@@ -85,6 +87,7 @@ export default function ThemeSection({ profile }: ThemeSectionProps) {
           label="Cor de destaque"
           value={themeAccent}
           onChange={setThemeAccent}
+          disabled={!canEdit}
         />
         {errors.theme_accent && (
           <p className="text-sm text-red-600">{errors.theme_accent}</p>
@@ -103,7 +106,7 @@ export default function ThemeSection({ profile }: ThemeSectionProps) {
             ? "Salvando automaticamente..."
             : savedAt
               ? `Salvo às ${savedAt}`
-              : "Salvamento automático ativo"}
+              : canEdit ? "Salvamento automático ativo" : "Modo leitura"}
         </span>
       </div>
     </div>

@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
-import type { Profile } from "@/types/profile";
+import type { Profile, ProfileAccessInfo } from "@/types/profile";
+import type { Permission } from "@/types/access";
 
 export async function getCurrentUser() {
   const supabase = await createClient();
@@ -17,6 +18,20 @@ export async function requireUser() {
   return user;
 }
 
+const ALL_PERMISSIONS: Permission[] = [
+  "profile.view",
+  "profile.edit",
+  "theme.edit",
+  "social_links.edit",
+  "blocks.view",
+  "blocks.edit",
+  "schedule.view",
+  "schedule.edit",
+  "bookings.view",
+  "bookings.manage",
+  "page.publish",
+];
+
 export async function getOrCreateProfile(userId: string): Promise<Profile> {
   const supabase = await createClient();
 
@@ -29,7 +44,13 @@ export async function getOrCreateProfile(userId: string): Promise<Profile> {
     .maybeSingle();
 
   if (!error && data) {
-    return data as Profile;
+    return {
+      ...data,
+      access: {
+        role: "owner" as const,
+        permissions: ALL_PERMISSIONS,
+      },
+    } as Profile;
   }
 
   for (let attempt = 0; attempt < 5; attempt++) {
@@ -45,7 +66,13 @@ export async function getOrCreateProfile(userId: string): Promise<Profile> {
       .single();
 
     if (!insertError && created) {
-      return created as Profile;
+      return {
+        ...created,
+        access: {
+          role: "owner" as const,
+          permissions: ALL_PERMISSIONS,
+        },
+      } as Profile;
     }
 
     const isUsernameConflict =
@@ -60,6 +87,7 @@ export async function getOrCreateProfile(userId: string): Promise<Profile> {
 
   throw new Error("Não foi possível criar seu perfil. Tente novamente.");
 }
+
 
 export async function getSiteUrl() {
   const headersList = await headers();
@@ -87,14 +115,50 @@ export async function resolveProfile(
 ): Promise<Profile> {
   const supabase = await createClient();
   if (profileId) {
-    const { data } = await supabase
+    const { data: profile } = await supabase
       .from("profiles")
       .select("*")
       .eq("id", profileId)
-      .eq("user_id", userId)
       .maybeSingle();
-    if (data) return data as Profile;
+    if (profile) {
+      // Se for o proprietário, retorna com acesso total
+      if (profile.user_id === userId) {
+        return {
+          ...profile,
+          access: {
+            role: "owner" as const,
+            permissions: ALL_PERMISSIONS,
+          },
+        } as Profile;
+      }
+
+      // Se não for proprietário, verificar acesso delegado
+      const { data: access } = await supabase
+        .from("profile_access")
+        .select("*")
+        .eq("profile_id", profileId)
+        .eq("grantee_user_id", userId)
+        .eq("status", "active")
+        .maybeSingle();
+
+      if (access) {
+        const { data: permissions } = await supabase
+          .from("profile_access_permissions")
+          .select("permission")
+          .eq("profile_access_id", access.id);
+
+        return {
+          ...profile,
+          access: {
+            role: "delegate" as const,
+            permissions: (permissions ?? []).map((p: any) => p.permission as Permission),
+          },
+        } as Profile;
+      }
+    }
   }
+
+  // Se nenhum profileId for fornecido ou não encontrado, retorna o primeiro perfil próprio
   return getOrCreateProfile(userId);
 }
 

@@ -9,12 +9,16 @@ interface ProfileListManagerProps {
   profiles: Profile[];
   currentProfileId: string;
   onProfileDeleted: (profileId: string) => void;
+  onProfileSelect?: (profile: Profile, accessInfo?: any) => void;
+  showOwnerInfo?: boolean;
 }
 
 export default function ProfileListManager({
   profiles,
   currentProfileId,
   onProfileDeleted,
+  onProfileSelect,
+  showOwnerInfo = false,
 }: ProfileListManagerProps) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [showConfirm, setShowConfirm] = useState<string | null>(null);
@@ -86,10 +90,10 @@ export default function ProfileListManager({
     return (
       <div className="rounded-card border border-gray-100 bg-white p-6 shadow-card">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
-          Meus Perfis
+          {showOwnerInfo ? "Páginas que administro" : "Meus Perfis"}
         </h2>
         <p className="mt-2 text-gray-600">
-          Você ainda não tem perfis. Crie seu primeiro perfil!
+          {showOwnerInfo ? "Nenhuma página para administrar." : "Você ainda não tem perfis. Crie seu primeiro perfil!"}
         </p>
       </div>
     );
@@ -99,18 +103,20 @@ export default function ProfileListManager({
     <div className="rounded-card border border-gray-100 bg-white p-6 shadow-card">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
-          Meus Perfis ({profiles.length})
+          {showOwnerInfo ? `Páginas que administro (${profiles.length})` : `Meus Perfis (${profiles.length})`}
         </h2>
-        <button
-          onClick={() => {
-            setShowCreate(!showCreate);
-            setError(null);
-            setUsername("");
-          }}
-          className="rounded-card border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:border-[#7C3AED] hover:text-[#7C3AED]"
-        >
-          + Novo
-        </button>
+        {!showOwnerInfo && (
+          <button
+            onClick={() => {
+              setShowCreate(!showCreate);
+              setError(null);
+              setUsername("");
+            }}
+            className="rounded-card border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:border-[#7C3AED] hover:text-[#7C3AED]"
+          >
+            + Novo
+          </button>
+        )}
       </div>
 
       {showCreate && (
@@ -178,6 +184,9 @@ export default function ProfileListManager({
                   {profile.name || "Sem nome"}
                 </p>
                 <p className="text-sm text-gray-500">@{profile.username}</p>
+                {showOwnerInfo && profile.access?.role === "delegate" && (
+                  <p className="text-xs text-gray-400">Acesso: {profile.access.permissions.length} permissões</p>
+                )}
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -186,25 +195,32 @@ export default function ProfileListManager({
                   Atual
                 </span>
               )}
-              <Link
-                href={`/dashboard/edit?profileId=${profile.id}`}
-                className="rounded-card border border-[#7C3AED] bg-purple-50 px-3 py-1.5 text-sm font-medium text-[#7C3AED] transition-colors hover:bg-purple-100"
-              >
-                Editar
-              </Link>
               <button
                 onClick={() => {
-                  if (profile.id === currentProfileId && profiles.length === 1) {
-                    alert("Você não pode excluir seu único perfil.");
-                    return;
+                  if (onProfileSelect) {
+                    onProfileSelect(profile, profile.access);
                   }
-                  setShowConfirm(profile.id);
+                  window.location.href = `/dashboard/edit?profileId=${profile.id}`;
                 }}
-                disabled={deletingId === profile.id}
-                className="rounded-card border border-red-200 bg-red-50 px-3 py-1.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-100 disabled:opacity-50"
+                className="rounded-card border border-[#7C3AED] bg-purple-50 px-3 py-1.5 text-sm font-medium text-[#7C3AED] transition-colors hover:bg-purple-100"
               >
-                {deletingId === profile.id ? "Excluindo..." : "Excluir"}
+                {showOwnerInfo ? "Administrar" : "Editar"}
               </button>
+              {!showOwnerInfo && (
+                <button
+                  onClick={() => {
+                    if (profile.id === currentProfileId && profiles.length === 1) {
+                      alert("Você não pode excluir seu único perfil.");
+                      return;
+                    }
+                    setShowConfirm(profile.id);
+                  }}
+                  disabled={deletingId === profile.id}
+                  className="rounded-card border border-red-200 bg-red-50 px-3 py-1.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-100 disabled:opacity-50"
+                >
+                  {deletingId === profile.id ? "Excluindo..." : "Excluir"}
+                </button>
+              )}
             </div>
           </div>
         ))}

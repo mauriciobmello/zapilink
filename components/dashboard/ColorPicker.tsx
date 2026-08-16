@@ -17,12 +17,14 @@ interface ColorPickerProps {
   value: string | null;
   onChange: (color: string) => void;
   label: string;
+  disabled?: boolean;
 }
 
 export default function ColorPicker({
   value,
   onChange,
   label,
+  disabled = false,
 }: ColorPickerProps) {
   const hex = isValidHex(value) ? value : "#7C3AED";
   return (
@@ -36,7 +38,8 @@ export default function ColorPicker({
           value={hex}
           onChange={(e) => onChange(e.target.value)}
           aria-label={`${label} (seletor)`}
-          className="h-11 w-14 cursor-pointer rounded-card border border-gray-200 bg-white p-1"
+          disabled={disabled}
+          className="h-11 w-14 cursor-pointer rounded-card border border-gray-200 bg-white p-1 disabled:opacity-50 disabled:cursor-not-allowed"
         />
         <input
           type="text"
@@ -44,7 +47,8 @@ export default function ColorPicker({
           onChange={(e) => onChange(e.target.value)}
           placeholder="#RRGGBB"
           aria-label={`${label} (hex)`}
-          className="h-11 w-36 rounded-card border border-gray-200 px-3 text-sm outline-none focus:border-[#7C3AED]"
+          disabled={disabled}
+          className="h-11 w-36 rounded-card border border-gray-200 px-3 text-sm outline-none focus:border-[#7C3AED] disabled:opacity-50"
         />
       </div>
       <div className="mt-3 flex flex-wrap gap-2">
@@ -53,8 +57,9 @@ export default function ColorPicker({
             key={color}
             type="button"
             onClick={() => onChange(color)}
+            disabled={disabled}
             aria-label={`Usar cor ${color}`}
-            className="h-8 w-8 rounded-full border border-gray-200 transition-transform hover:scale-110"
+            className="h-8 w-8 rounded-full border border-gray-200 transition-transform hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed"
             style={{ backgroundColor: color }}
           />
         ))}

@@ -16,6 +16,7 @@ interface BlockListEditorProps {
   profile: Profile;
   initialBlocks: Block[];
   onBlocksChange?: (blocks: Block[]) => void;
+  canEdit?: boolean;
 }
 
 export default function BlockListEditor({
@@ -23,6 +24,7 @@ export default function BlockListEditor({
   profile,
   initialBlocks,
   onBlocksChange,
+  canEdit = true,
 }: BlockListEditorProps) {
   const [blocks, setBlocks] = useState<Block[]>(initialBlocks);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -86,7 +88,7 @@ export default function BlockListEditor({
   }
 
   async function addBlock(type: BlockType) {
-    if (blocks.length >= MAX_BLOCKS) return;
+    if (!canEdit || blocks.length >= MAX_BLOCKS) return;
     const position =
       blocks.length > 0
         ? Math.max(...blocks.map((b) => b.position)) + 1
@@ -120,6 +122,7 @@ export default function BlockListEditor({
   }
 
   async function deleteBlock(id: string) {
+    if (!canEdit) return;
     if (!window.confirm("Excluir este bloco?")) return;
 
     const supabase = createBrowserClient();
@@ -136,6 +139,7 @@ export default function BlockListEditor({
   }
 
   async function toggleVisibility(id: string) {
+    if (!canEdit) return;
     const block = blocksRef.current.find((b) => b.id === id);
     if (!block) return;
     const nextVisible = !block.is_visible;
@@ -206,7 +210,7 @@ export default function BlockListEditor({
                 void addBlock(e.target.value as BlockType);
               }
             }}
-            disabled={atBlockLimit}
+            disabled={atBlockLimit || !canEdit}
             aria-label="Adicionar bloco"
             className="h-11 rounded-card border border-gray-200 bg-white px-4 text-sm font-medium text-gray-700 outline-none focus:border-[#7C3AED] disabled:cursor-not-allowed disabled:opacity-50"
           >
