@@ -10,18 +10,19 @@ import {
   emptyContentFor,
 } from "@/lib/blockUtils";
 import BlockCard, { type BlockStatus } from "./BlockCard";
-import PreviewPane from "@/components/dashboard/PreviewPane";
 
 interface BlockListEditorProps {
   profileId: string;
   profile: Profile;
   initialBlocks: Block[];
+  onBlocksChange?: (blocks: Block[]) => void;
 }
 
 export default function BlockListEditor({
   profileId,
   profile,
   initialBlocks,
+  onBlocksChange,
 }: BlockListEditorProps) {
   const [blocks, setBlocks] = useState<Block[]>(initialBlocks);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -31,7 +32,8 @@ export default function BlockListEditor({
   const blocksRef = useRef(blocks);
   useEffect(() => {
     blocksRef.current = blocks;
-  }, [blocks]);
+    onBlocksChange?.(blocks);
+  }, [blocks, onBlocksChange]);
 
   const timersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
@@ -193,81 +195,73 @@ export default function BlockListEditor({
   const atBlockLimit = blocks.length >= MAX_BLOCKS;
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[1fr_480px]">
-      <div className="space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-xl font-bold text-gray-900">Blocos</h2>
-          <div>
-            <select
-              value=""
-              onChange={(e) => {
-                if (e.target.value) {
-                  void addBlock(e.target.value as BlockType);
-                }
-              }}
-              disabled={atBlockLimit}
-              aria-label="Adicionar bloco"
-              className="h-11 rounded-card border border-gray-200 bg-white px-4 text-sm font-medium text-gray-700 outline-none focus:border-[#7C3AED] disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <option value="" disabled>
-                + Adicionar bloco
-              </option>
-              {(Object.keys(BLOCK_TYPE_LABELS) as BlockType[]).map((type) => (
-                <option key={type} value={type}>
-                  {BLOCK_TYPE_LABELS[type]}
-                </option>
-              ))}
-            </select>
-            {atBlockLimit && (
-              <p className="mt-1 text-xs text-gray-400">
-                Limite de {MAX_BLOCKS} blocos por perfil.
-              </p>
-            )}
-          </div>
-        </div>
-
-        {errorMsgs.add && (
-          <p role="alert" className="text-sm text-red-600">
-            {errorMsgs.add}
-          </p>
-        )}
-
-        {blocks.length === 0 ? (
-          <div className="rounded-card border border-dashed border-gray-300 bg-white p-10 text-center">
-            <p className="text-gray-600">Nenhum bloco ainda.</p>
-            <p className="mt-1 text-sm text-gray-400">
-              Adicione botões, serviços ou uma FAQ para montar sua página.
-            </p>
-          </div>
-        ) : (
-          blocks.map((block, index) => (
-            <BlockCard
-              key={block.id}
-              block={block}
-              status={statuses[block.id] ?? "idle"}
-              errorMsg={errorMsgs[block.id]}
-              isExpanded={expandedId === block.id}
-              canMoveUp={index > 0}
-              canMoveDown={index < blocks.length - 1}
-              onToggleExpand={() =>
-                setExpandedId((prev) => (prev === block.id ? null : block.id))
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-xl font-bold text-gray-900">Blocos</h2>
+        <div>
+          <select
+            value=""
+            onChange={(e) => {
+              if (e.target.value) {
+                void addBlock(e.target.value as BlockType);
               }
-              onMoveUp={() => void moveBlock(block.id, -1)}
-              onMoveDown={() => void moveBlock(block.id, 1)}
-              onToggleVisibility={() => void toggleVisibility(block.id)}
-              onDelete={() => void deleteBlock(block.id)}
-              onRetry={() => retrySave(block.id)}
-              onChange={(patch) => updateBlock(block.id, patch)}
-            />
-          ))
-        )}
+            }}
+            disabled={atBlockLimit}
+            aria-label="Adicionar bloco"
+            className="h-11 rounded-card border border-gray-200 bg-white px-4 text-sm font-medium text-gray-700 outline-none focus:border-[#7C3AED] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <option value="" disabled>
+              + Adicionar bloco
+            </option>
+            {(Object.keys(BLOCK_TYPE_LABELS) as BlockType[]).map((type) => (
+              <option key={type} value={type}>
+                {BLOCK_TYPE_LABELS[type]}
+              </option>
+            ))}
+          </select>
+          {atBlockLimit && (
+            <p className="mt-1 text-xs text-gray-400">
+              Limite de {MAX_BLOCKS} blocos por perfil.
+            </p>
+          )}
+        </div>
       </div>
 
-      <aside className="hidden lg:block">
-        <div className="sticky top-8">
-          <PreviewPane profile={profile} blocks={blocks} />
+      {errorMsgs.add && (
+        <p role="alert" className="text-sm text-red-600">
+          {errorMsgs.add}
+        </p>
+      )}
+
+      {blocks.length === 0 ? (
+        <div className="rounded-card border border-dashed border-gray-300 bg-white p-10 text-center">
+          <p className="text-gray-600">Nenhum bloco ainda.</p>
+          <p className="mt-1 text-sm text-gray-400">
+            Adicione botões, serviços ou uma FAQ para montar sua página.
+          </p>
         </div>
-      </aside>
+      ) : (
+        blocks.map((block, index) => (
+          <BlockCard
+            key={block.id}
+            block={block}
+            status={statuses[block.id] ?? "idle"}
+            errorMsg={errorMsgs[block.id]}
+            isExpanded={expandedId === block.id}
+            canMoveUp={index > 0}
+            canMoveDown={index < blocks.length - 1}
+            onToggleExpand={() =>
+              setExpandedId((prev) => (prev === block.id ? null : block.id))
+            }
+            onMoveUp={() => void moveBlock(block.id, -1)}
+            onMoveDown={() => void moveBlock(block.id, 1)}
+            onToggleVisibility={() => void toggleVisibility(block.id)}
+            onDelete={() => void deleteBlock(block.id)}
+            onRetry={() => retrySave(block.id)}
+            onChange={(patch) => updateBlock(block.id, patch)}
+          />
+        ))
+      )}
     </div>
   );
 }
