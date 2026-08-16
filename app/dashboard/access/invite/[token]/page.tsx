@@ -10,7 +10,8 @@ export const dynamic = "force-dynamic";
 export default function AcceptInvitePage() {
   const router = useRouter();
   const params = useParams();
-  const token = params.token as string;
+  const rawToken = params.token;
+  const token = Array.isArray(rawToken) ? rawToken[0] : (rawToken as string) || "";
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -31,8 +32,11 @@ export default function AcceptInvitePage() {
           return;
         }
 
+        console.log("[AcceptInvite] Token recebido:", token);
+        console.log("[AcceptInvite] Usuário logado:", user.id, user.email);
+
         // Validar o token do convite para o usuário autenticado
-        const { data: access } = await supabase
+        const { data: access, error: accessError } = await supabase
           .from("profile_access")
           .select(`
             *,
@@ -43,11 +47,20 @@ export default function AcceptInvitePage() {
           .eq("grantee_user_id", user.id)
           .single();
 
-        if (!access) {
-          setError("Convite não encontrado, já aceito ou expirado");
+        if (accessError) {
+          console.error("[AcceptInvite] Erro Supabase:", accessError);
+          setError(`Convite não encontrado para o token informado. Verifique se você está logado com a conta correta (${user.email}).`);
           setLoading(false);
           return;
         }
+
+        if (!access) {
+          setError(`Convite não encontrado, já aceito ou expirado. (Token: ${token})`);
+          setLoading(false);
+          return;
+        }
+
+        console.log("[AcceptInvite] Convite encontrado:", access);
 
         // Verificar se o usuário autenticado é o destinatário do convite
         if (access.grantee_user_id !== user.id) {
