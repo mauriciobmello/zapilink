@@ -35,8 +35,9 @@ export default function DashboardPage() {
 
         setUser(user);
 
-        // Obter perfis acessíveis (próprios e delegados)
-        const accessible = await getAccessibleProfiles(user.id);
+        // Obter perfis acessíveis (próprios e delegados) via API
+        const res = await fetch("/api/profiles/accessible");
+        const accessible: { owned: Profile[]; delegated: any[] } = await res.json();
         
         if (!cancelled) {
           setOwnedProfiles(accessible.owned);
