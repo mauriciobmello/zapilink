@@ -1,0 +1,26 @@
+{
+  "name": "Zapilink",
+  "short_name": "Zapilink",
+  "description": "Agende serviços e compartilhe sua página de agendamento",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#6200b2",
+  "theme_color": "#6200b2",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
