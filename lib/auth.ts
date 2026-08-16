@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { canAccessProfile } from "@/lib/access/authorization";
 import type { Profile, ProfileAccessInfo } from "@/types/profile";
 import type { Permission } from "@/types/access";
 
@@ -114,47 +116,33 @@ export async function resolveProfile(
   profileId?: string,
 ): Promise<Profile> {
   const supabase = await createClient();
+  const admin = createAdminClient();
+
   if (profileId) {
     const { data: profile } = await supabase
       .from("profiles")
       .select("*")
       .eq("id", profileId)
       .maybeSingle();
+
     if (profile) {
-      // Se for o proprietário, retorna com acesso total
-      if (profile.user_id === userId) {
+      // Verificar acesso usando service role (bypass RLS)
+      const access = await canAccessProfile(userId, profileId);
+      if (access.allowed) {
         return {
           ...profile,
           access: {
-            role: "owner" as const,
-            permissions: ALL_PERMISSIONS,
+            role: access.role as "owner" | "delegate",
+            permissions: access.permissions as Permission[],
           },
         } as Profile;
       }
 
-      // Se não for proprietário, verificar acesso delegado
-      const { data: access } = await supabase
-        .from("profile_access")
-        .select("*")
-        .eq("profile_id", profileId)
-        .eq("grantee_user_id", userId)
-        .eq("status", "active")
-        .maybeSingle();
-
-      if (access) {
-        const { data: permissions } = await supabase
-          .from("profile_access_permissions")
-          .select("permission")
-          .eq("profile_access_id", access.id);
-
-        return {
-          ...profile,
-          access: {
-            role: "delegate" as const,
-            permissions: (permissions ?? []).map((p: any) => p.permission as Permission),
-          },
-        } as Profile;
-      }
+      // Sem acesso: retornar 404
+      return {
+        ...profile,
+        access: { role: null, permissions: [] } as unknown as ProfileAccessInfo,
+      } as unknown as Profile;
     }
   }
 
