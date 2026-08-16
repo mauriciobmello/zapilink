@@ -35,50 +35,22 @@ export default function AcceptInvitePage() {
         console.log("[AcceptInvite] Token recebido:", token);
         console.log("[AcceptInvite] Usuário logado:", user.id, user.email);
 
-        // Validar o token do convite para o usuário autenticado
-        const { data: access, error: accessError } = await supabase
-          .from("profile_access")
-          .select(`
-            *,
-            profiles (name, username)
-          `)
-          .eq("invite_token", token)
-          .eq("status", "pending")
-          .eq("grantee_user_id", user.id)
-          .single();
+        // Buscar convite via API do servidor (bypass RLS)
+        const res = await fetch(`/api/access/invite/${token}`);
+        const data = await res.json();
 
-        if (accessError) {
-          console.error("[AcceptInvite] Erro Supabase:", accessError);
-          setError(`Convite não encontrado para o token informado. Verifique se você está logado com a conta correta (${user.email}).`);
+        if (!res.ok) {
+          console.error("[AcceptInvite] Erro API:", data);
+          setError(data.error || "Erro ao carregar convite");
           setLoading(false);
           return;
         }
 
-        if (!access) {
-          setError(`Convite não encontrado, já aceito ou expirado. (Token: ${token})`);
-          setLoading(false);
-          return;
-        }
+        console.log("[AcceptInvite] Convite encontrado:", data);
 
-        console.log("[AcceptInvite] Convite encontrado:", access);
-
-        // Verificar se o usuário autenticado é o destinatário do convite
-        if (access.grantee_user_id !== user.id) {
-          setError("Este convite não é destinado ao seu usuário");
-          setLoading(false);
-          return;
-        }
-
-        setProfileName(access.profiles?.name || access.profiles?.username);
-        setOwnerName(access.invited_email);
-
-        // Buscar permissões
-        const { data: permissionsData } = await supabase
-          .from("profile_access_permissions")
-          .select("permission")
-          .eq("profile_access_id", access.id);
-
-        setPermissions(permissionsData?.map((p: any) => p.permission) || []);
+        setProfileName(data.profileName);
+        setOwnerName(data.access.invited_email);
+        setPermissions(data.permissions || []);
         setLoading(false);
       } catch (err) {
         console.error("Error loading invite:", err);
@@ -91,35 +63,24 @@ export default function AcceptInvitePage() {
   }, [token, router]);
 
   async function handleAccept() {
-    const supabase = createBrowserClient();
     setLoading(true);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        setError("Você precisa estar autenticado");
+      const res = await fetch("/api/access/accept", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || "Erro ao aceitar convite");
         setLoading(false);
         return;
       }
 
-      // Aceitar o convite
-      const { error } = await supabase
-        .from("profile_access")
-        .update({
-          status: "active",
-          accepted_at: new Date().toISOString(),
-        })
-        .eq("invite_token", token)
-        .eq("status", "pending");
-
-      if (error) throw error;
-
-      await securityLogger.info("Access invite accepted", {
-        userId: user.id,
-        token,
-      });
-
+      console.log("[AcceptInvite] Convite aceito:", data);
       router.push("/dashboard");
     } catch (err) {
       console.error("Error accepting invite:", err);
@@ -129,33 +90,22 @@ export default function AcceptInvitePage() {
   }
 
   async function handleDecline() {
-    const supabase = createBrowserClient();
     setLoading(true);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
+      const res = await fetch("/api/access/decline", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || "Erro ao recusar convite");
         setLoading(false);
         return;
       }
-
-      // Recusar o convite (revogar)
-      const { error } = await supabase
-        .from("profile_access")
-        .update({
-          status: "revoked",
-          revoked_at: new Date().toISOString(),
-        })
-        .eq("invite_token", token)
-        .eq("status", "pending");
-
-      if (error) throw error;
-
-      await securityLogger.info("Access invite declined", {
-        userId: user.id,
-        token,
-      });
 
       router.push("/dashboard");
     } catch (err) {
