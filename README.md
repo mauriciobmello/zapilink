@@ -81,6 +81,7 @@ Execute the SQL scripts in Supabase SQL Editor in order:
 4. `scripts/migrate-blocks.sql` - Profile blocks
 5. `scripts/migrate-schedule.sql` - Schedule/agenda system
 6. `scripts/setup-storage.sql` - Storage buckets
+7. `scripts/migrate-access-delegation.sql` - Access delegation / multi-user admin
 
 ### 5. Start the development server
 
