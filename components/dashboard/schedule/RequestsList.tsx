@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import type { Booking, BookingStatus } from "@/types/schedule";
+import { type Section } from "./ScheduleLayout";
 
 interface RequestsListProps {
   bookings: Booking[];
   eventTitle: string;
+  activeSection: Section;
 }
 
 function formatDateTime(booking: Booking): string {
@@ -30,7 +32,7 @@ const STATUS_CLASSES: Record<BookingStatus, string> = {
   declined: "bg-red-100 text-red-700",
 };
 
-export default function RequestsList({ bookings, eventTitle }: RequestsListProps) {
+export default function RequestsList({ bookings, eventTitle, activeSection }: RequestsListProps) {
   const [list, setList] = useState<Booking[]>(bookings);
   const [error, setError] = useState<string | null>(null);
 
@@ -60,6 +62,10 @@ export default function RequestsList({ bookings, eventTitle }: RequestsListProps
           : b,
       ),
     );
+  }
+
+  if (activeSection !== "requests") {
+    return null;
   }
 
   return (

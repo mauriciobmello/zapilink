@@ -38,6 +38,36 @@ async function performAction(
   const timezone = event?.timezone ?? "America/Sao_Paulo";
 
   if (action === "approve") {
+    // Verificar capacidade antes de aprovar
+    const { data: existingApproved } = await admin
+      .from("bookings")
+      .select("id")
+      .eq("profile_id", booking.profile_id)
+      .eq("slot_date", booking.slot_date)
+      .eq("slot_start_time", booking.slot_start_time)
+      .eq("status", "approved");
+    
+    const currentApprovedCount = (existingApproved ?? []).length;
+    
+    // Determinar capacidade efetiva para este slot
+    const { data: exceptions } = await admin
+      .from("availability_exceptions")
+      .select("*")
+      .eq("profile_id", booking.profile_id)
+      .eq("date", booking.slot_date)
+      .eq("type", "capacity_override");
+    
+    const slotException = (exceptions ?? []).find(
+      (e) => e.start_time === booking.slot_start_time && 
+             e.end_time === booking.slot_end_time && 
+             e.capacity !== null
+    );
+    const effectiveCapacity = slotException ? slotException.capacity! : event?.default_capacity ?? 1;
+    
+    if (currentApprovedCount >= effectiveCapacity) {
+      return { ok: false, error: "Horário já está com capacidade máxima aprovada.", status: 409 };
+    }
+    
     let googleEventId: string | null = null;
     try {
       const conn = await getConnectionAccessToken(booking.profile_id);

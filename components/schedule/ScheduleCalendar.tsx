@@ -149,20 +149,21 @@ export default function ScheduleCalendar({
               ${dayInfo.isPast ? 'text-gray-300 cursor-not-allowed' : ''}
               ${dayInfo.isToday ? 'ring-2 ring-gray-300' : ''}
               ${dayInfo.isAvailable && !dayInfo.isPast ? 
-                `hover:opacity-80 cursor-pointer` : 
+                `hover:opacity-80 cursor-pointer text-gray-900` : 
                 dayInfo.isPast ? 'cursor-not-allowed' : 'cursor-not-allowed'
               }
               ${selectedDate === dayInfo.date ? 'ring-2 ring-offset-2' : ''}
             `}
             style={
-              dayInfo.isAvailable && !dayInfo.isPast
+              selectedDate === dayInfo.date
                 ? {
                     backgroundColor: primaryColor,
                     color: 'white',
-                  }
-                : selectedDate === dayInfo.date
-                ? {
                     borderColor: primaryColor,
+                  }
+                : dayInfo.isAvailable && !dayInfo.isPast
+                ? {
+                    backgroundColor: '#cccccc',
                   }
                 : {}
             }
@@ -178,7 +179,7 @@ export default function ScheduleCalendar({
             className="w-4 h-4 rounded"
             style={{ backgroundColor: primaryColor }}
           />
-          <span>Dias disponíveis</span>
+          <span>Data selecionada</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-4 h-4 rounded bg-gray-200" />

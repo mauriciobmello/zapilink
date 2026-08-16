@@ -112,13 +112,37 @@ export async function POST(
     .select("slot_date, slot_start_time")
     .eq("profile_id", profile.id)
     .eq("slot_date", slotDate)
-    .in("status", ["pending", "approved"]);
+    .eq("status", "approved");
 
   const bookedCounts = new Map<string, number>();
   for (const b of bookings ?? []) {
     bookedCounts.set(
       `${b.slot_date}|${b.slot_start_time}`,
       (bookedCounts.get(`${b.slot_date}|${b.slot_start_time}`) ?? 0) + 1,
+    );
+  }
+
+  // Verificação direta de capacidade antes de computar disponibilidade
+  const slotKey = `${slotDate}|${slotStart}`;
+  const currentBookings = bookedCounts.get(slotKey) ?? 0;
+  
+  // Determinar capacidade efetiva para este slot específico
+  const slotExceptions = (exceptions ?? []).filter(
+    (e) => e.date === slotDate && e.type === "capacity_override" && e.start_time === slotStart && e.end_time === slotEnd && e.capacity !== null
+  );
+  const effectiveCapacity = slotExceptions.length > 0 ? slotExceptions[0].capacity! : event.default_capacity;
+  
+  if (currentBookings >= effectiveCapacity) {
+    await securityLogger.warn("Booking slot already at capacity", {
+      username: username,
+      slotDate: slotDate,
+      slotStart: slotStart,
+      currentBookings: currentBookings,
+      effectiveCapacity: effectiveCapacity,
+    });
+    return NextResponse.json(
+      { error: "Horário esgotado." },
+      { status: 409 },
     );
   }
 

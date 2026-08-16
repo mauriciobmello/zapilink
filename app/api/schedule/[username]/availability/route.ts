@@ -52,7 +52,7 @@ export async function GET(
     .from("bookings")
     .select("slot_date, slot_start_time")
     .eq("profile_id", profile.id)
-    .in("status", ["pending", "approved"])
+    .eq("status", "approved")
     .gte("slot_date", fromDate)
     .lte("slot_date", endDate);
 

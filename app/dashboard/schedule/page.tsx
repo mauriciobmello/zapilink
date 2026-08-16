@@ -1,7 +1,6 @@
 import { requireUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
-import ScheduleConfig from "@/components/dashboard/schedule/ScheduleConfig";
-import RequestsList from "@/components/dashboard/schedule/RequestsList";
+import SchedulePageContent from "@/components/dashboard/schedule/SchedulePageContent";
 import type {
   AvailabilityException,
   AvailabilityRule,
@@ -103,17 +102,13 @@ export default async function SchedulePage({
         </p>
       </div>
 
-      <ScheduleConfig
+      <SchedulePageContent
         profileId={profile.id}
         initialEvent={event}
         initialRules={(rules ?? []) as AvailabilityRule[]}
         initialExceptions={(exceptions ?? []) as AvailabilityException[]}
         googleEmail={connection?.google_email ?? null}
-      />
-
-      <RequestsList
         bookings={(bookings ?? []) as Booking[]}
-        eventTitle={event.title}
       />
     </div>
   );

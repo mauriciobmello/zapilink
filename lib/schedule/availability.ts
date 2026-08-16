@@ -185,7 +185,7 @@ export function computeAvailability(
         const key = `${date}|${fromMinutes(slotStart)}`;
         const booked = bookedCounts.get(key) ?? 0;
         const remaining = capacity - booked;
-        if (remaining <= 0) continue;
+        if (remaining < 0) continue; // Never return negative capacity
 
         const busyForDate = busyByDate.get(date) ?? [];
         if (

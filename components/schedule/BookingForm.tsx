@@ -217,10 +217,13 @@ export default function BookingForm({ username, profile, event }: BookingFormPro
                     <button
                       key={`${slot.date}|${slot.start_time}`}
                       type="button"
-                      onClick={() => setSelectedTime(slot.start_time)}
+                      onClick={() => slot.remaining_capacity > 0 && setSelectedTime(slot.start_time)}
+                      disabled={slot.remaining_capacity <= 0}
                       className={`rounded-card px-4 py-2 text-sm font-medium transition-colors ${
                         selectedTime === slot.start_time
                           ? "bg-[var(--theme-primary,#7C3AED)] text-white"
+                          : slot.remaining_capacity <= 0
+                          ? "bg-gray-200 text-gray-400 cursor-not-allowed"
                           : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                       }`}
                     >
