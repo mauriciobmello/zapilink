@@ -66,17 +66,21 @@ export default function AccessManagementPage() {
 
         setProfile(profileData);
 
-        // Carregar acessos
-        const { data: accessData } = await supabase
-          .from("profile_access")
-          .select(`
-            *,
-            profile_access_permissions (permission)
-          `)
-          .eq("profile_id", profileId)
-          .order("created_at", { ascending: false });
+        // Carregar acessos via API (bypass RLS para proprietário)
+        const res = await fetch(`/api/access/list?profileId=${profileId}`);
+        const listData = await res.json();
 
-        setAccessList(accessData || []);
+        console.log("[AccessPage] profileId:", profileId);
+        console.log("[AccessPage] user:", user.id, user.email);
+        console.log("[AccessPage] listData:", listData);
+
+        if (!res.ok) {
+          setError(listData.error || "Erro ao carregar acessos");
+          setLoading(false);
+          return;
+        }
+
+        setAccessList(listData.accessList || []);
         setLoading(false);
       } catch (err) {
         console.error("Error loading access data:", err);
@@ -133,17 +137,10 @@ export default function AccessManagementPage() {
   }
 
   async function reloadAccessList() {
-    const supabase = createBrowserClient();
-    const { data: accessData } = await supabase
-      .from("profile_access")
-      .select(`
-        *,
-        profile_access_permissions (permission)
-      `)
-      .eq("profile_id", profileId)
-      .order("created_at", { ascending: false });
-
-    setAccessList(accessData || []);
+    if (!profileId) return;
+    const res = await fetch(`/api/access/list?profileId=${profileId}`);
+    const listData = await res.json();
+    setAccessList(listData.accessList || []);
   }
 
   async function handleReactivate(accessId: string) {
