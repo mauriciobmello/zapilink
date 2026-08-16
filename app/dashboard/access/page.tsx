@@ -119,17 +119,7 @@ export default function AccessManagementPage() {
         permissions: invitePermissions,
       });
 
-      // Recarregar lista
-      const { data: accessData } = await supabase
-        .from("profile_access")
-        .select(`
-          *,
-          profile_access_permissions (permission)
-        `)
-        .eq("profile_id", profileId)
-        .order("created_at", { ascending: false });
-
-      setAccessList(accessData || []);
+      await reloadAccessList();
       setShowInviteModal(false);
       setInviteEmail("");
       setInvitePermissions([]);
@@ -139,6 +129,46 @@ export default function AccessManagementPage() {
       console.error("Error inviting admin:", err);
       setError("Erro ao criar convite");
       setInviting(false);
+    }
+  }
+
+  async function reloadAccessList() {
+    const supabase = createBrowserClient();
+    const { data: accessData } = await supabase
+      .from("profile_access")
+      .select(`
+        *,
+        profile_access_permissions (permission)
+      `)
+      .eq("profile_id", profileId)
+      .order("created_at", { ascending: false });
+
+    setAccessList(accessData || []);
+  }
+
+  async function handleReactivate(accessId: string) {
+    if (!confirm("Tem certeza que deseja reativar este acesso?")) {
+      return;
+    }
+
+    const supabase = createBrowserClient();
+
+    try {
+      const { error } = await supabase
+        .from("profile_access")
+        .update({
+          status: "active",
+          revoked_at: null,
+        })
+        .eq("id", accessId);
+
+      if (error) throw error;
+
+      await securityLogger.info("Admin access reactivated", { accessId });
+      await reloadAccessList();
+    } catch (err) {
+      console.error("Error reactivating access:", err);
+      alert("Erro ao reativar acesso");
     }
   }
 
@@ -161,18 +191,7 @@ export default function AccessManagementPage() {
       if (error) throw error;
 
       await securityLogger.info("Admin access revoked", { accessId });
-
-      // Recarregar lista
-      const { data: accessData } = await supabase
-        .from("profile_access")
-        .select(`
-          *,
-          profile_access_permissions (permission)
-        `)
-        .eq("profile_id", profileId)
-        .order("created_at", { ascending: false });
-
-      setAccessList(accessData || []);
+      await reloadAccessList();
     } catch (err) {
       console.error("Error revoking access:", err);
       alert("Erro ao revogar acesso");
@@ -257,56 +276,106 @@ export default function AccessManagementPage() {
             </p>
           </div>
         ) : (
-          accessList.map((access) => (
-            <div
-              key={access.id}
-              className="rounded-card border border-gray-100 bg-white p-6 shadow-card"
-            >
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="font-medium text-gray-900">
-                    {access.invited_email}
-                  </p>
-                  <p className="mt-1 text-sm text-gray-500">
-                    Status:{" "}
-                    <span
-                      className={`font-medium ${
-                        access.status === "active"
-                          ? "text-green-600"
-                          : access.status === "pending"
-                          ? "text-yellow-600"
-                          : "text-red-600"
-                      }`}
-                    >
-                      {access.status === "active"
-                        ? "Ativo"
-                        : access.status === "pending"
-                        ? "Pendente"
-                        : "Revogado"}
-                    </span>
-                  </p>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {access.profile_access_permissions?.map((perm: any) => (
+          <div className="overflow-hidden rounded-card border border-gray-100 bg-white shadow-card">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    E-mail
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    Enviado em
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    Permissões
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
+                    Ações
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200 bg-white">
+                {accessList.map((access) => (
+                  <tr key={access.id}>
+                    <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">
+                      {access.invited_email}
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                      {access.invited_at
+                        ? new Date(access.invited_at).toLocaleDateString('pt-BR', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })
+                        : '-'}
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4 text-sm">
                       <span
-                        key={perm.permission}
-                        className="rounded-full bg-purple-100 px-2 py-1 text-xs font-medium text-purple-700"
+                        className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${
+                          access.status === "active"
+                            ? "bg-green-100 text-green-700"
+                            : access.status === "pending"
+                            ? "bg-yellow-100 text-yellow-700"
+                            : "bg-red-100 text-red-700"
+                        }`}
                       >
-                        {perm.permission}
+                        {access.status === "active"
+                          ? "Ativo"
+                          : access.status === "pending"
+                          ? "Pendente"
+                          : "Revogado"}
                       </span>
-                    ))}
-                  </div>
-                </div>
-                {access.status === "active" && (
-                  <button
-                    onClick={() => handleRevoke(access.id)}
-                    className="rounded-card border border-red-200 bg-red-50 px-3 py-1.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-100"
-                  >
-                    Revogar acesso
-                  </button>
-                )}
-              </div>
-            </div>
-          ))
+                      {access.accepted_at && (
+                        <p className="mt-1 text-xs text-gray-400">
+                          Aceito em {new Date(access.accepted_at).toLocaleDateString('pt-BR')}
+                        </p>
+                      )}
+                      {access.revoked_at && (
+                        <p className="mt-1 text-xs text-gray-400">
+                          Revogado em {new Date(access.revoked_at).toLocaleDateString('pt-BR')}
+                        </p>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-500">
+                      <div className="flex flex-wrap gap-1">
+                        {access.profile_access_permissions?.map((perm: any) => (
+                          <span
+                            key={perm.permission}
+                            className="rounded-full bg-purple-100 px-2 py-1 text-xs font-medium text-purple-700"
+                          >
+                            {perm.permission}
+                          </span>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
+                      {access.status === "active" && (
+                        <button
+                          onClick={() => handleRevoke(access.id)}
+                          className="rounded-card border border-red-200 bg-red-50 px-3 py-1.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-100"
+                        >
+                          Revogar
+                        </button>
+                      )}
+                      {access.status === "revoked" && (
+                        <button
+                          onClick={() => handleReactivate(access.id)}
+                          className="rounded-card border border-green-200 bg-green-50 px-3 py-1.5 text-sm font-medium text-green-600 transition-colors hover:bg-green-100"
+                        >
+                          Reativar
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
