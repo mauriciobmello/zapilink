@@ -20,7 +20,7 @@ interface EditPageContentProps {
 export default function EditPageContent({ profile, initialBlocks }: EditPageContentProps) {
   const searchParams = useSearchParams();
   const [blocks, setBlocks] = useState<Block[]>(initialBlocks);
-  const { checkPermission, isOwner } = useProfile();
+  const { checkPermission, isOwner, role, permissions } = useProfile();
   
   // Determinar quais abas são permitidas
   const canViewProfile = checkPermission("profile.view");
@@ -29,6 +29,8 @@ export default function EditPageContent({ profile, initialBlocks }: EditPageCont
   const canEditBlocks = checkPermission("blocks.edit");
   const canEditSocial = checkPermission("social_links.edit");
   const canEditTheme = checkPermission("theme.edit");
+
+  console.log("[EditPageContent] role:", role, "permissions:", permissions, "canEditProfile:", canEditProfile);
 
   const validTabs = ["perfil", "blocos", "links", "tema"] as const;
   const currentTab = searchParams.get("tab") ?? "perfil";

@@ -268,35 +268,22 @@ export default function AccessManagementPage() {
   async function savePermissions() {
     if (!editingAccess) return;
     setSavingPermissions(true);
+    setError(null);
 
-    const supabase = createBrowserClient();
     try {
-      // Remover permissões antigas
-      const { error: deleteError } = await supabase
-        .from("profile_access_permissions")
-        .delete()
-        .eq("profile_access_id", editingAccess.id);
-
-      if (deleteError) throw deleteError;
-
-      // Inserir novas permissões
-      if (editPermissions.length > 0) {
-        const { error: insertError } = await supabase
-          .from("profile_access_permissions")
-          .insert(
-            editPermissions.map((permission) => ({
-              profile_access_id: editingAccess.id,
-              permission,
-            }))
-          );
-
-        if (insertError) throw insertError;
-      }
-
-      await securityLogger.info("Access permissions updated", {
-        accessId: editingAccess.id,
-        permissions: editPermissions,
+      const res = await fetch(`/api/access/${editingAccess.id}/permissions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ permissions: editPermissions }),
       });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || "Erro ao salvar permissões");
+        setSavingPermissions(false);
+        return;
+      }
 
       await reloadAccessList();
       setEditingAccess(null);

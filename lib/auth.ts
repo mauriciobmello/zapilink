@@ -115,6 +115,7 @@ export async function resolveProfile(
   userId: string,
   profileId?: string,
 ): Promise<Profile> {
+  console.log("[resolveProfile] userId:", userId, "profileId:", profileId);
   const supabase = await createClient();
   const admin = createAdminClient();
 
@@ -128,6 +129,7 @@ export async function resolveProfile(
     if (profile) {
       // Verificar acesso usando service role (bypass RLS)
       const access = await canAccessProfile(userId, profileId);
+      console.log("[resolveProfile] access:", access);
       if (access.allowed) {
         return {
           ...profile,

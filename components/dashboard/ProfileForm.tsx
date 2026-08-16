@@ -38,6 +38,7 @@ const inputClass =
   "h-11 w-full rounded-card border border-gray-200 px-4 text-base outline-none focus:border-[#7C3AED] focus:ring-2 focus:ring-[#7C3AED]/20";
 
 export default function ProfileForm({ initialData, initialBlocks, canEdit = true }: ProfileFormProps) {
+  console.log("[ProfileForm] canEdit:", canEdit);
   const router = useRouter();
   const [form, setForm] = useState<Profile>(initialData);
   const [saving, setSaving] = useState(false);
