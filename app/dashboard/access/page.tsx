@@ -169,6 +169,35 @@ export default function AccessManagementPage() {
     }
   }
 
+  async function handleResend(accessId: string) {
+    setInviting(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      const res = await fetch("/api/access/resend", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ accessId }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || "Erro ao reenviar convite");
+        setInviting(false);
+        return;
+      }
+
+      setSuccess("Convite reenviado com sucesso");
+      setInviting(false);
+    } catch (err) {
+      console.error("Error resending invite:", err);
+      setError("Erro ao reenviar convite");
+      setInviting(false);
+    }
+  }
+
   async function handleDelete(accessId: string) {
     if (!confirm("Tem certeza que deseja excluir este convite? Esta ação não pode ser desfeita.")) {
       return;
@@ -390,6 +419,15 @@ export default function AccessManagementPage() {
                             className="rounded-card border border-green-200 bg-green-50 px-3 py-1.5 text-sm font-medium text-green-600 transition-colors hover:bg-green-100"
                           >
                             Reativar
+                          </button>
+                        )}
+                        {access.status === "pending" && (
+                          <button
+                            onClick={() => handleResend(access.id)}
+                            disabled={inviting}
+                            className="rounded-card border border-[#7C3AED] bg-purple-50 px-3 py-1.5 text-sm font-medium text-[#7C3AED] transition-colors hover:bg-purple-100 disabled:opacity-50"
+                          >
+                            {inviting ? "Enviando..." : "Reenviar"}
                           </button>
                         )}
                         <button
