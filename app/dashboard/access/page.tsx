@@ -169,6 +169,30 @@ export default function AccessManagementPage() {
     }
   }
 
+  async function handleDelete(accessId: string) {
+    if (!confirm("Tem certeza que deseja excluir este convite? Esta ação não pode ser desfeita.")) {
+      return;
+    }
+
+    const supabase = createBrowserClient();
+
+    try {
+      const { error } = await supabase
+        .from("profile_access")
+        .delete()
+        .eq("id", accessId)
+        .eq("profile_id", profileId);
+
+      if (error) throw error;
+
+      await securityLogger.info("Access invite deleted", { accessId });
+      await reloadAccessList();
+    } catch (err) {
+      console.error("Error deleting access:", err);
+      alert("Erro ao excluir convite");
+    }
+  }
+
   async function handleRevoke(accessId: string) {
     if (!confirm("Tem certeza que deseja revogar este acesso?")) {
       return;
@@ -351,22 +375,30 @@ export default function AccessManagementPage() {
                       </div>
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
-                      {access.status === "active" && (
+                      <div className="flex items-center justify-end gap-2">
+                        {access.status === "active" && (
+                          <button
+                            onClick={() => handleRevoke(access.id)}
+                            className="rounded-card border border-red-200 bg-red-50 px-3 py-1.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-100"
+                          >
+                            Revogar
+                          </button>
+                        )}
+                        {access.status === "revoked" && (
+                          <button
+                            onClick={() => handleReactivate(access.id)}
+                            className="rounded-card border border-green-200 bg-green-50 px-3 py-1.5 text-sm font-medium text-green-600 transition-colors hover:bg-green-100"
+                          >
+                            Reativar
+                          </button>
+                        )}
                         <button
-                          onClick={() => handleRevoke(access.id)}
-                          className="rounded-card border border-red-200 bg-red-50 px-3 py-1.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-100"
+                          onClick={() => handleDelete(access.id)}
+                          className="rounded-card border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50"
                         >
-                          Revogar
+                          Excluir
                         </button>
-                      )}
-                      {access.status === "revoked" && (
-                        <button
-                          onClick={() => handleReactivate(access.id)}
-                          className="rounded-card border border-green-200 bg-green-50 px-3 py-1.5 text-sm font-medium text-green-600 transition-colors hover:bg-green-100"
-                        >
-                          Reativar
-                        </button>
-                      )}
+                      </div>
                     </td>
                   </tr>
                 ))}
