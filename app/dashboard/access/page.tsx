@@ -23,6 +23,9 @@ export default function AccessManagementPage() {
   const [inviting, setInviting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [editingAccess, setEditingAccess] = useState<any | null>(null);
+  const [editPermissions, setEditPermissions] = useState<Permission[]>([]);
+  const [savingPermissions, setSavingPermissions] = useState(false);
 
   const availablePermissions = getAllPermissions();
 
@@ -248,6 +251,64 @@ export default function AccessManagementPage() {
     }
   }
 
+  function openEditPermissions(access: any) {
+    setEditingAccess(access);
+    const current = access.profile_access_permissions?.map((p: any) => p.permission as Permission) || [];
+    setEditPermissions(current);
+  }
+
+  function toggleEditPermission(permission: Permission) {
+    setEditPermissions((prev) =>
+      prev.includes(permission)
+        ? prev.filter((p) => p !== permission)
+        : [...prev, permission]
+    );
+  }
+
+  async function savePermissions() {
+    if (!editingAccess) return;
+    setSavingPermissions(true);
+
+    const supabase = createBrowserClient();
+    try {
+      // Remover permissões antigas
+      const { error: deleteError } = await supabase
+        .from("profile_access_permissions")
+        .delete()
+        .eq("profile_access_id", editingAccess.id);
+
+      if (deleteError) throw deleteError;
+
+      // Inserir novas permissões
+      if (editPermissions.length > 0) {
+        const { error: insertError } = await supabase
+          .from("profile_access_permissions")
+          .insert(
+            editPermissions.map((permission) => ({
+              profile_access_id: editingAccess.id,
+              permission,
+            }))
+          );
+
+        if (insertError) throw insertError;
+      }
+
+      await securityLogger.info("Access permissions updated", {
+        accessId: editingAccess.id,
+        permissions: editPermissions,
+      });
+
+      await reloadAccessList();
+      setEditingAccess(null);
+      setSuccess("Permissões atualizadas com sucesso");
+    } catch (err) {
+      console.error("Error saving permissions:", err);
+      setError("Erro ao salvar permissões");
+    } finally {
+      setSavingPermissions(false);
+    }
+  }
+
   function togglePermission(permission: Permission) {
     setInvitePermissions((prev) =>
       prev.includes(permission)
@@ -330,19 +391,19 @@ export default function AccessManagementPage() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                  <th className="px-4 py-2 text-left text-[10px] font-medium uppercase tracking-wider text-gray-500">
                     E-mail
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                  <th className="px-4 py-2 text-left text-[10px] font-medium uppercase tracking-wider text-gray-500">
                     Enviado em
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                  <th className="px-4 py-2 text-left text-[10px] font-medium uppercase tracking-wider text-gray-500">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                  <th className="px-4 py-2 text-left text-[10px] font-medium uppercase tracking-wider text-gray-500">
                     Permissões
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
+                  <th className="px-4 py-2 text-right text-[10px] font-medium uppercase tracking-wider text-gray-500">
                     Ações
                   </th>
                 </tr>
@@ -350,10 +411,10 @@ export default function AccessManagementPage() {
               <tbody className="divide-y divide-gray-200 bg-white">
                 {accessList.map((access) => (
                   <tr key={access.id}>
-                    <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">
+                    <td className="whitespace-nowrap px-4 py-2 text-xs font-medium text-gray-900">
                       {access.invited_email}
                     </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                    <td className="whitespace-nowrap px-4 py-2 text-xs text-gray-500">
                       {access.invited_at
                         ? new Date(access.invited_at).toLocaleDateString('pt-BR', {
                             day: '2-digit',
@@ -364,9 +425,9 @@ export default function AccessManagementPage() {
                           })
                         : '-'}
                     </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-sm">
+                    <td className="whitespace-nowrap px-4 py-2 text-xs">
                       <span
-                        className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${
+                        className={`inline-flex rounded-full px-1.5 py-0.5 text-[10px] font-medium ${
                           access.status === "active"
                             ? "bg-green-100 text-green-700"
                             : access.status === "pending"
@@ -381,34 +442,40 @@ export default function AccessManagementPage() {
                           : "Revogado"}
                       </span>
                       {access.accepted_at && (
-                        <p className="mt-1 text-xs text-gray-400">
+                        <p className="mt-0.5 text-[10px] text-gray-400">
                           Aceito em {new Date(access.accepted_at).toLocaleDateString('pt-BR')}
                         </p>
                       )}
                       {access.revoked_at && (
-                        <p className="mt-1 text-xs text-gray-400">
+                        <p className="mt-0.5 text-[10px] text-gray-400">
                           Revogado em {new Date(access.revoked_at).toLocaleDateString('pt-BR')}
                         </p>
                       )}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
+                    <td className="px-4 py-2 text-xs text-gray-500">
                       <div className="flex flex-wrap gap-1">
                         {access.profile_access_permissions?.map((perm: any) => (
                           <span
                             key={perm.permission}
-                            className="rounded-full bg-purple-100 px-2 py-1 text-xs font-medium text-purple-700"
+                            className="rounded-full bg-purple-100 px-1.5 py-0.5 text-[10px] font-medium text-purple-700"
                           >
                             {perm.permission}
                           </span>
                         ))}
                       </div>
                     </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
-                      <div className="flex items-center justify-end gap-2">
+                    <td className="whitespace-nowrap px-4 py-2 text-right text-xs font-medium">
+                      <div className="flex flex-wrap items-center justify-end gap-1">
+                        <button
+                          onClick={() => openEditPermissions(access)}
+                          className="rounded border border-[#7C3AED] bg-purple-50 px-2 py-1 text-[10px] font-medium text-[#7C3AED] transition-colors hover:bg-purple-100"
+                        >
+                          Editar
+                        </button>
                         {access.status === "active" && (
                           <button
                             onClick={() => handleRevoke(access.id)}
-                            className="rounded-card border border-red-200 bg-red-50 px-3 py-1.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-100"
+                            className="rounded border border-red-200 bg-red-50 px-2 py-1 text-[10px] font-medium text-red-600 transition-colors hover:bg-red-100"
                           >
                             Revogar
                           </button>
@@ -416,7 +483,7 @@ export default function AccessManagementPage() {
                         {access.status === "revoked" && (
                           <button
                             onClick={() => handleReactivate(access.id)}
-                            className="rounded-card border border-green-200 bg-green-50 px-3 py-1.5 text-sm font-medium text-green-600 transition-colors hover:bg-green-100"
+                            className="rounded border border-green-200 bg-green-50 px-2 py-1 text-[10px] font-medium text-green-600 transition-colors hover:bg-green-100"
                           >
                             Reativar
                           </button>
@@ -425,14 +492,14 @@ export default function AccessManagementPage() {
                           <button
                             onClick={() => handleResend(access.id)}
                             disabled={inviting}
-                            className="rounded-card border border-[#7C3AED] bg-purple-50 px-3 py-1.5 text-sm font-medium text-[#7C3AED] transition-colors hover:bg-purple-100 disabled:opacity-50"
+                            className="rounded border border-[#7C3AED] bg-purple-50 px-2 py-1 text-[10px] font-medium text-[#7C3AED] transition-colors hover:bg-purple-100 disabled:opacity-50"
                           >
-                            {inviting ? "Enviando..." : "Reenviar"}
+                            {inviting ? "..." : "Reenviar"}
                           </button>
                         )}
                         <button
                           onClick={() => handleDelete(access.id)}
-                          className="rounded-card border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50"
+                          className="rounded border border-gray-300 bg-white px-2 py-1 text-[10px] font-medium text-gray-600 transition-colors hover:bg-gray-50"
                         >
                           Excluir
                         </button>
@@ -445,6 +512,64 @@ export default function AccessManagementPage() {
           </div>
         )}
       </div>
+
+      {editingAccess && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="rounded-card border border-gray-100 bg-white p-6 shadow-card max-w-lg w-full mx-4">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">
+              Editar permissões
+            </h2>
+            <p className="mb-4 text-sm text-gray-600">
+              {editingAccess.invited_email}
+            </p>
+
+            <div className="space-y-2 max-h-60 overflow-y-auto mb-6">
+              {Object.entries(availablePermissions).map(([key, perm]) => (
+                <label
+                  key={key}
+                  className="flex items-start gap-2 cursor-pointer"
+                >
+                  <input
+                    type="checkbox"
+                    checked={editPermissions.includes(key as Permission)}
+                    onChange={() => toggleEditPermission(key as Permission)}
+                    disabled={savingPermissions}
+                    className="mt-1 rounded border-gray-300 text-[#7C3AED] focus:ring-[#7C3AED]"
+                  />
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">
+                      {perm.label}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {perm.description}
+                    </p>
+                  </div>
+                </label>
+              ))}
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={savePermissions}
+                disabled={savingPermissions}
+                className="flex-1 rounded-card bg-[#7C3AED] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#8B5CF6] disabled:opacity-50"
+              >
+                {savingPermissions ? "Salvando..." : "Salvar permissões"}
+              </button>
+              <button
+                onClick={() => {
+                  setEditingAccess(null);
+                  setEditPermissions([]);
+                }}
+                disabled={savingPermissions}
+                className="flex-1 rounded-card border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showInviteModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
