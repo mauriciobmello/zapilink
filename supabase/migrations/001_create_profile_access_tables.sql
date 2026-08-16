@@ -166,3 +166,9 @@ CREATE POLICY profile_access_permissions_grantee_select
       AND pa.grantee_user_id = auth.uid()
     )
   );
+
+-- Token de convite único
+ALTER TABLE profile_access ADD COLUMN IF NOT EXISTS invite_token uuid DEFAULT gen_random_uuid() UNIQUE;
+
+CREATE INDEX IF NOT EXISTS profile_access_invite_token_idx
+ON profile_access(invite_token);

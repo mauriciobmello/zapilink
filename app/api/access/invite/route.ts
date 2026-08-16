@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { securityLogger } from "@/lib/security-logger";
-import { nanoid } from "nanoid";
+import { sendInviteEmail } from "@/lib/access/invite-email";
 
 export const dynamic = "force-dynamic";
 
@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
     // 1. Verificar se o usuário é proprietário do perfil
     const { data: profile } = await supabase
       .from("profiles")
-      .select("user_id")
+      .select("name, username, user_id")
       .eq("id", profileId)
       .single();
 
@@ -83,9 +83,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 4. Criar o convite
-    const token = nanoid(32);
-
+    // 4. Criar o convite com token UUID
     const { data: access, error: accessError } = await supabase
       .from("profile_access")
       .insert({
@@ -116,9 +114,25 @@ export async function POST(request: NextRequest) {
       throw permissionsError;
     }
 
-    // 6. Em um sistema real, aqui você enviaria um e-mail com o link
-    // const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/access/invite/${token}`;
-    // await sendInviteEmail(email, inviteUrl);
+    // 6. Enviar e-mail de convite
+    const appUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+    const inviteUrl = `${appUrl}/dashboard/access/invite/${access.invite_token}`;
+
+    try {
+      await sendInviteEmail({
+        recipient: email,
+        profileName: profile.name || profile.username,
+        ownerEmail: user.email || "",
+        inviteUrl,
+      });
+    } catch (emailError) {
+      // Não falhar o convite se o e-mail não for enviado, mas logar
+      console.error("Failed to send invite email:", emailError);
+      await securityLogger.warn("Invite email failed", {
+        accessId: access.id,
+        error: emailError instanceof Error ? emailError.message : "Unknown error",
+      });
+    }
 
     await securityLogger.info("Access invite created", {
       profileId,
@@ -130,7 +144,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       accessId: access.id,
-      // inviteUrl, // Retornar apenas em desenvolvimento
+      inviteUrl,
     });
   } catch (error) {
     console.error("Error creating invite:", error);

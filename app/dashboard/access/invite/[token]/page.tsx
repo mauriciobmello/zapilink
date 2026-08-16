@@ -31,26 +31,32 @@ export default function AcceptInvitePage() {
           return;
         }
 
-        // Em um sistema real, você validaria o token aqui
-        // Por enquanto, vamos simular a busca pelo convite pendente do usuário
+        // Validar o token do convite
         const { data: access } = await supabase
           .from("profile_access")
           .select(`
             *,
             profiles (name, username)
           `)
-          .eq("grantee_user_id", user.id)
+          .eq("invite_token", token)
           .eq("status", "pending")
           .single();
 
         if (!access) {
-          setError("Convite não encontrado ou inválido");
+          setError("Convite não encontrado, já aceito ou expirado");
+          setLoading(false);
+          return;
+        }
+
+        // Verificar se o usuário autenticado é o destinatário do convite
+        if (access.grantee_user_id !== user.id) {
+          setError("Este convite não é destinado ao seu usuário");
           setLoading(false);
           return;
         }
 
         setProfileName(access.profiles?.name || access.profiles?.username);
-        setOwnerName(access.invited_email); // Usar o email convidado
+        setOwnerName(access.invited_email);
 
         // Buscar permissões
         const { data: permissionsData } = await supabase
@@ -90,7 +96,7 @@ export default function AcceptInvitePage() {
           status: "active",
           accepted_at: new Date().toISOString(),
         })
-        .eq("grantee_user_id", user.id)
+        .eq("invite_token", token)
         .eq("status", "pending");
 
       if (error) throw error;
@@ -127,7 +133,7 @@ export default function AcceptInvitePage() {
           status: "revoked",
           revoked_at: new Date().toISOString(),
         })
-        .eq("grantee_user_id", user.id)
+        .eq("invite_token", token)
         .eq("status", "pending");
 
       if (error) throw error;
