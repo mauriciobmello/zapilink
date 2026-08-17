@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ShareIcon, XIcon } from "@/components/icons";
+import { CopyIcon, XIcon } from "@/components/icons";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -26,6 +26,30 @@ function isStandalone(): boolean {
     window.matchMedia("(display-mode: standalone)").matches ||
     (window.navigator as unknown as { standalone?: boolean }).standalone ===
       true
+  );
+}
+
+function CopyLinkButton() {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setCopied(false);
+    }
+  };
+
+  return (
+    <button
+      onClick={handleCopy}
+      className="flex w-full items-center justify-center gap-2 rounded-xl bg-gray-100 px-4 py-3 text-sm font-medium text-gray-800 transition hover:bg-gray-200"
+    >
+      <CopyIcon className="h-4 w-4" />
+      {copied ? "Link copiado!" : "Copiar link do app"}
+    </button>
   );
 }
 
@@ -134,14 +158,11 @@ export default function InstallPrompt({
 
         {platform === "ios" && (
           <div className="mb-6 rounded-xl bg-gray-50 p-4 text-left text-sm text-gray-700">
-            <p className="mb-2">
-              Toque no botão <strong>Compartilhar</strong>{" "}
-              <ShareIcon className="mx-1 inline h-4 w-4" /> e depois em{" "}
-              <strong>Adicionar à Tela de Início</strong>.
+            <p className="mb-4">
+              Para adicionar esse app na sua Tela inicial, abra esse link no
+              seu navegador.
             </p>
-            <p>
-              Depois, abra o app direto da sua Home Screen.
-            </p>
+            <CopyLinkButton />
           </div>
         )}
 
