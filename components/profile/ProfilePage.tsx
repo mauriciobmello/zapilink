@@ -5,6 +5,7 @@ import type { Block, ButtonItem } from "@/types/block";
 import type { Profile } from "@/types/profile";
 import { getProfileTheme } from "@/lib/profileTheme";
 import { CalendarIcon } from "@/components/icons";
+import InstallPrompt from "@/components/pwa/InstallPrompt";
 import ProfileHeader from "./ProfileHeader";
 import BlockRenderer from "@/components/blocks/BlockRenderer";
 
@@ -73,6 +74,7 @@ export default function ProfilePage({
           </a>
         </footer>
       </div>
+      <InstallPrompt appName={profile.name || "Zapilink"} />
     </main>
   );
 }
