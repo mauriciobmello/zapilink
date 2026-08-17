@@ -29,12 +29,13 @@ function isStandalone(): boolean {
   );
 }
 
-function CopyLinkButton() {
+function CopyLinkButton({ username }: { username: string }) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(window.location.href);
+      const url = `${window.location.origin}/${username}`;
+      await navigator.clipboard.writeText(url);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
@@ -55,10 +56,16 @@ function CopyLinkButton() {
 
 interface InstallPromptProps {
   appName?: string;
+  photoUrl?: string;
+  themeColor?: string;
+  username?: string;
 }
 
 export default function InstallPrompt({
   appName = "Zapilink",
+  photoUrl,
+  themeColor = "#6200b2",
+  username = "",
 }: InstallPromptProps) {
   const [show, setShow] = useState(false);
   const [platform, setPlatform] = useState<Platform>("other");
@@ -145,8 +152,19 @@ export default function InstallPrompt({
           <XIcon className="h-5 w-5" />
         </button>
 
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#6200b2]">
-          <span className="text-3xl font-bold text-white">Z</span>
+        <div
+          className="mx-auto mb-4 flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl"
+          style={{ backgroundColor: themeColor }}
+        >
+          {photoUrl ? (
+            <img
+              src={photoUrl}
+                alt={appName}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <span className="text-3xl font-bold text-white">Z</span>
+          )}
         </div>
 
         <h2 className="mb-2 text-xl font-bold text-gray-900">
@@ -162,7 +180,7 @@ export default function InstallPrompt({
               Para adicionar esse app na sua Tela inicial, abra esse link no
               seu navegador.
             </p>
-            <CopyLinkButton />
+            <CopyLinkButton username={username} />
           </div>
         )}
 

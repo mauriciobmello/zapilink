@@ -74,7 +74,12 @@ export default function ProfilePage({
           </a>
         </footer>
       </div>
-      <InstallPrompt appName={profile.name || "Zapilink"} />
+      <InstallPrompt
+        appName={profile.name || "Zapilink"}
+        photoUrl={profile.photo_url || undefined}
+        themeColor={theme.primary}
+        username={profile.username}
+      />
     </main>
   );
 }
