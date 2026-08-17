@@ -49,7 +49,7 @@ export async function POST(request: Request) {
       const message = error?.message ?? "Não foi possível adicionar a estrela.";
       return NextResponse.json(
         { error: message },
-        { status: rpcErrorStatus(message) },
+        { status: rpcErrorStatus({ code: error?.code, message }) },
       );
     }
 

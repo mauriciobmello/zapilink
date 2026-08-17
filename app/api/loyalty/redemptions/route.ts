@@ -43,7 +43,7 @@ export async function POST(request: Request) {
       const message = error?.message ?? "Não foi possível registrar o resgate.";
       return NextResponse.json(
         { error: message },
-        { status: rpcErrorStatus(message) },
+        { status: rpcErrorStatus({ code: error?.code, message }) },
       );
     }
 

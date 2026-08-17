@@ -287,14 +287,29 @@ export async function logLoyaltyEvent(input: AuditInput): Promise<void> {
   }
 }
 
-/** Mensagens de erro dos RPCs traduzidas em status HTTP. */
-export function rpcErrorStatus(message: string): number {
-  if (message.includes("LY001") || message.includes("não encontrada")) return 404;
-  if (message.includes("LY002")) return 409;
-  if (message.includes("LY003")) return 400;
-  if (message.includes("LY004")) return 409;
-  if (message.includes("LY005")) return 409;
-  if (message.includes("LY006")) return 409;
-  if (message.includes("LY007")) return 409;
+const RPC_ERROR_STATUS: Record<string, number> = {
+  LY001: 404,
+  LY002: 409,
+  LY003: 400,
+  LY004: 409,
+  LY005: 409,
+  LY006: 409,
+  LY007: 409,
+};
+
+/** Erros dos RPCs traduzidos em status HTTP pelo SQLSTATE customizado. */
+export function rpcErrorStatus(error: {
+  code?: string | null;
+  message?: string | null;
+}): number {
+  const code = error.code?.toUpperCase();
+  if (code && RPC_ERROR_STATUS[code]) return RPC_ERROR_STATUS[code];
+
+  const message = error.message ?? "";
+  const fromMessage = Object.keys(RPC_ERROR_STATUS).find((key) =>
+    message.includes(key),
+  );
+  if (fromMessage) return RPC_ERROR_STATUS[fromMessage];
+
   return 500;
 }
