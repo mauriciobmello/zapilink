@@ -31,6 +31,14 @@ const ALL_PERMISSIONS: Permission[] = [
   "schedule.edit",
   "bookings.view",
   "bookings.manage",
+  "loyalty.view",
+  "loyalty.customers.view",
+  "loyalty.customers.manage",
+  "loyalty.stars.add",
+  "loyalty.stars.reverse",
+  "loyalty.benefits.view",
+  "loyalty.benefits.redeem",
+  "loyalty.settings.edit",
   "page.publish",
 ];
 

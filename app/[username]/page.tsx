@@ -49,6 +49,15 @@ export default async function UserProfilePage({
   const scheduleAgendaUrl =
     scheduleEvent?.is_active ? `/${username}/agenda` : undefined;
 
+  const { data: loyaltyProgram } = await supabase
+    .from("loyalty_programs")
+    .select("is_active")
+    .eq("profile_id", p.id)
+    .maybeSingle();
+  const loyaltyUrl = loyaltyProgram?.is_active
+    ? `/${username}/loyalty`
+    : undefined;
+
   await supabase.from("page_views").insert({ profile_id: p.id });
 
   return (
@@ -56,6 +65,7 @@ export default async function UserProfilePage({
       profile={p}
       blocks={visibleBlocks}
       scheduleAgendaUrl={scheduleAgendaUrl}
+      loyaltyUrl={loyaltyUrl}
     />
   );
 }

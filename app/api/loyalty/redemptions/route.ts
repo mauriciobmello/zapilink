@@ -1,0 +1,67 @@
+import { NextResponse } from "next/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { loyaltyErrorResponse, readJsonBody, readString } from "@/lib/loyalty/http";
+import {
+  logLoyaltyEvent,
+  requireLoyaltyAdmin,
+  requireMemberInProgram,
+  rpcErrorStatus,
+} from "@/lib/loyalty/server";
+
+export const dynamic = "force-dynamic";
+
+/** Resgate é operação separada da conquista da meta. */
+export async function POST(request: Request) {
+  try {
+    const body = await readJsonBody(request);
+    const { userId, profileId, program } = await requireLoyaltyAdmin(
+      readString(body, "profileId"),
+      "loyalty.benefits.redeem",
+    );
+
+    const memberId = readString(body, "memberId");
+    if (!memberId) {
+      return NextResponse.json(
+        { error: "Participação não informada." },
+        { status: 400 },
+      );
+    }
+    const member = await requireMemberInProgram(program.id, memberId);
+    const notes = readString(body, "notes")?.trim() || null;
+
+    const admin = createAdminClient();
+    const { data: redemption, error } = await admin.rpc(
+      "redeem_loyalty_benefit",
+      {
+        p_member_id: member.id,
+        p_redeemed_by: userId,
+        p_notes: notes,
+      },
+    );
+
+    if (error || !redemption) {
+      const message = error?.message ?? "Não foi possível registrar o resgate.";
+      return NextResponse.json(
+        { error: message },
+        { status: rpcErrorStatus(message) },
+      );
+    }
+
+    await logLoyaltyEvent({
+      event: "benefit.redeemed",
+      actorUserId: userId,
+      profileId,
+      programId: program.id,
+      customerId: member.customer_id,
+      metadata: {
+        member_id: member.id,
+        redemption_id: redemption.id,
+        cycle: redemption.cycle,
+      },
+    });
+
+    return NextResponse.json({ redemption });
+  } catch (error) {
+    return loyaltyErrorResponse(error);
+  }
+}
