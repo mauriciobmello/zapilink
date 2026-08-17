@@ -11,6 +11,7 @@ const NAV_LINKS = [
   { href: "/dashboard", label: "Visão Geral" },
   { href: "/dashboard/edit", label: "Editar Perfil" },
   { href: "/dashboard/schedule", label: "Agenda" },
+  { href: "/dashboard/loyalty", label: "Fidelidade" },
   { href: "/dashboard/preview", label: "Preview" },
 ];
 
@@ -25,7 +26,8 @@ function DashboardNav() {
   // Only show navigation links and profile switcher on edit/schedule/preview pages, not on main dashboard
   const showNavElements = pathname === "/dashboard/edit" || 
                           pathname === "/dashboard/schedule" || 
-                          pathname === "/dashboard/preview";
+                          pathname === "/dashboard/preview" ||
+                          pathname.startsWith("/dashboard/loyalty");
 
   return (
     <nav className="border-b border-gray-100 bg-white">
@@ -38,7 +40,9 @@ function DashboardNav() {
                 key={link.href}
                 href={navHref(link.href)}
                 className={`rounded-card px-3 py-2 text-sm font-medium transition-colors ${
-                  pathname === link.href
+                  pathname === link.href ||
+                  (link.href !== "/dashboard" &&
+                    pathname.startsWith(`${link.href}/`))
                     ? "bg-[#7C3AED] text-white"
                     : "text-gray-600 hover:bg-gray-100"
                 }`}

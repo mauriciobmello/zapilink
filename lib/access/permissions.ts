@@ -41,6 +41,7 @@ export function groupPermissions(permissions: Permission[]) {
     blocks: permissions.filter((p) => p.startsWith("blocks.")),
     schedule: permissions.filter((p) => p.startsWith("schedule.")),
     bookings: permissions.filter((p) => p.startsWith("bookings.")),
+    loyalty: permissions.filter((p) => p.startsWith("loyalty.")),
     page: permissions.filter((p) => p.startsWith("page.")),
   };
 }
@@ -60,6 +61,14 @@ export function getDefaultPermissions(role: "editor" | "content" | "full"): Perm
     "schedule.edit",
     "bookings.view",
     "bookings.manage",
+    "loyalty.view",
+    "loyalty.customers.view",
+    "loyalty.customers.manage",
+    "loyalty.stars.add",
+    "loyalty.stars.reverse",
+    "loyalty.benefits.view",
+    "loyalty.benefits.redeem",
+    "loyalty.settings.edit",
     "page.publish",
   ];
 
@@ -132,6 +141,38 @@ export function getAllPermissions(): Record<string, { label: string; description
     "bookings.manage": {
       label: "Gerenciar agendamentos",
       description: "Permite aprovar/recusar agendamentos",
+    },
+    "loyalty.view": {
+      label: "Visualizar fidelidade",
+      description: "Permite visualizar o programa de fidelidade",
+    },
+    "loyalty.customers.view": {
+      label: "Visualizar clientes",
+      description: "Permite visualizar clientes do programa de fidelidade",
+    },
+    "loyalty.customers.manage": {
+      label: "Gerenciar clientes",
+      description: "Permite cadastrar e editar clientes do programa",
+    },
+    "loyalty.stars.add": {
+      label: "Lançar estrelas",
+      description: "Permite lançar uma estrela por atendimento",
+    },
+    "loyalty.stars.reverse": {
+      label: "Estornar estrelas",
+      description: "Permite estornar estrelas lançadas por engano",
+    },
+    "loyalty.benefits.view": {
+      label: "Visualizar benefícios",
+      description: "Permite visualizar benefícios disponíveis e resgatados",
+    },
+    "loyalty.benefits.redeem": {
+      label: "Registrar resgates",
+      description: "Permite registrar o resgate do benefício",
+    },
+    "loyalty.settings.edit": {
+      label: "Configurar fidelidade",
+      description: "Permite configurar meta, benefício e ativação do programa",
     },
     "page.publish": {
       label: "Publicar página",

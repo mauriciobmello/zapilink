@@ -4,7 +4,7 @@ import type { CSSProperties } from "react";
 import type { Block, ButtonItem } from "@/types/block";
 import type { Profile } from "@/types/profile";
 import { getProfileTheme } from "@/lib/profileTheme";
-import { CalendarIcon } from "@/components/icons";
+import { CalendarIcon, StarIcon } from "@/components/icons";
 import InstallPrompt from "@/components/pwa/InstallPrompt";
 import ProfileHeader from "./ProfileHeader";
 import BlockRenderer from "@/components/blocks/BlockRenderer";
@@ -13,6 +13,7 @@ interface ProfilePageProps {
   profile: Profile;
   blocks: Block[];
   scheduleAgendaUrl?: string;
+  loyaltyUrl?: string;
 }
 
 function hasScheduleButton(blocks: Block[]): boolean {
@@ -29,6 +30,7 @@ export default function ProfilePage({
   profile,
   blocks,
   scheduleAgendaUrl,
+  loyaltyUrl,
 }: ProfilePageProps) {
   const theme = getProfileTheme(profile);
   const visibleBlocks = blocks.filter((block) => block.is_visible);
@@ -53,6 +55,19 @@ export default function ProfilePage({
               >
                 <CalendarIcon className="h-5 w-5 shrink-0" />
                 <span>Agendar</span>
+              </a>
+            </div>
+          </section>
+        )}
+        {loyaltyUrl && (
+          <section aria-label="Programa de fidelidade" className="px-4 py-4">
+            <div className="mx-auto max-w-5xl">
+              <a
+                href={loyaltyUrl}
+                className="flex h-12 items-center justify-center gap-2 rounded-card border border-[var(--theme-primary)] bg-white px-4 font-medium text-[var(--theme-primary)] shadow-card transition-colors hover:bg-gray-50"
+              >
+                <StarIcon className="h-5 w-5 shrink-0" fill="currentColor" />
+                <span>Programa de Fidelidade</span>
               </a>
             </div>
           </section>

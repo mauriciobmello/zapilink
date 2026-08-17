@@ -1,7 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createBrowserClient } from "@/lib/supabase/client";
 import type { Permission, AccessCheck } from "@/types/access";
-import { getAllPermissions } from "./permissions";
+import { getDefaultPermissions } from "./permissions";
 
 /**
  * Verifica se um usuário tem acesso a um perfil com determinada permissão
@@ -30,23 +30,10 @@ export async function canAccessProfile(
 
   // Se for o proprietário, tem acesso total
   if (profile.user_id === userId) {
-    const allPermissions: Permission[] = [
-      "profile.view",
-      "profile.edit",
-      "theme.edit",
-      "social_links.edit",
-      "blocks.view",
-      "blocks.edit",
-      "schedule.view",
-      "schedule.edit",
-      "bookings.view",
-      "bookings.manage",
-      "page.publish",
-    ];
     return {
       allowed: true,
       role: "owner",
-      permissions: allPermissions,
+      permissions: getDefaultPermissions("full"),
     };
   }
 
