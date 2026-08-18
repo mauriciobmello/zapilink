@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import LoyaltyProgramCard from "@/components/loyalty/LoyaltyProgramCard";
+import LoyaltyPublicHeader from "@/components/loyalty/LoyaltyPublicHeader";
 import { loadPublicLoyalty } from "@/lib/loyalty/publicPage";
 
 export const dynamic = "force-dynamic";
@@ -17,11 +18,14 @@ export default async function LoyaltyPublicPage({
 
   return (
     <main className="min-h-screen" style={theme.background}>
+      <LoyaltyPublicHeader
+        profile={profile}
+        theme={theme}
+        backHref={`/${username}`}
+        backLabel="Voltar ao perfil"
+      />
       <div className="mx-auto max-w-2xl px-4 py-10">
-        <p className="text-center text-sm font-medium text-gray-500">
-          {profile.name ?? profile.username}
-        </p>
-        <h1 className="mt-1 text-center text-2xl font-bold text-gray-900">
+        <h1 className="text-center text-2xl font-bold text-gray-900">
           Programa de Fidelidade
         </h1>
 

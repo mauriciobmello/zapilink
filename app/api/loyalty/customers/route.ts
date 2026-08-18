@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { parseCustomerInput } from "@/lib/loyalty/customer";
+import { sendLoyaltyWelcomeEmail } from "@/lib/loyalty/email";
 import { loyaltyErrorResponse, readJsonBody } from "@/lib/loyalty/http";
 import {
   listCustomerSummaries,
@@ -108,6 +109,8 @@ export async function POST(request: Request) {
       customerId: customer.id,
       metadata: { source: "dashboard" },
     });
+
+    await sendLoyaltyWelcomeEmail(customer, program);
 
     return NextResponse.json({ customer, member_id: member.id });
   } catch (error) {
