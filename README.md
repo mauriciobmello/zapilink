@@ -148,6 +148,8 @@ zapilink/
 
 ## 🚀 Deployment
 
+Antes de publicar, siga o [Checklist de Publicação](docs/PUBLICACAO_CHECKLIST.md) — variáveis de ambiente, migrações SQL (incluindo `scripts/migrate-loyalty.sql`), OAuth e verificação pós-deploy.
+
 ### Dokploy (Recommended)
 
 Dokploy is a self-hosted PaaS that simplifies deployment with automatic Git integration:
@@ -178,10 +180,11 @@ npm start
 ### Available Scripts
 
 ```bash
-npm run dev      # Start development server
-npm run build    # Build for production
-npm start        # Start production server
-npm run lint     # Run ESLint
+npm run dev        # Start development server
+npm run build      # Build for production
+npm start          # Start production server
+npm run lint       # Run ESLint (flat config em eslint.config.mjs)
+npm run typecheck  # Run tsc --noEmit
 ```
 
 ### Code Style

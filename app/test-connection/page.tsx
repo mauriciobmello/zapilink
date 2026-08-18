@@ -197,8 +197,8 @@ export default function TestConnection() {
             <li>Acesse: <code className="bg-gray-200 px-2 py-1 rounded">/test-connection</code></li>
             <li>Verifique o status acima</li>
             <li>Abra o console do navegador (F12) para ver logs detalhados</li>
-            <li>Se mostrar "VARIÁVEIS FALTANDO", configure no Dokploy</li>
-            <li>Se mostrar "ERRO DE CONEXÃO", verifique as chaves Supabase</li>
+            <li>Se mostrar &quot;VARIÁVEIS FALTANDO&quot;, configure no Dokploy</li>
+            <li>Se mostrar &quot;ERRO DE CONEXÃO&quot;, verifique as chaves Supabase</li>
           </ol>
         </div>
 
