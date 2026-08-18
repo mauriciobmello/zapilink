@@ -72,6 +72,12 @@ SCHEDULE_EMAIL_FROM=noreply@yourdomain.com
 NEXT_PUBLIC_SITE_URL=https://yourdomain.com
 ```
 
+`SUPABASE_SERVICE_ROLE_KEY` é usada apenas no servidor — nunca a prefixe com `NEXT_PUBLIC_`.
+
+### 3. Aplicar as migrações do banco
+
+Antes do primeiro deploy (e sempre que novos scripts entrarem), rode os SQLs de `supabase/` e `scripts/` no SQL Editor do Supabase, na ordem descrita no [Checklist de Publicação](PUBLICACAO_CHECKLIST.md#2-migrações-do-banco-sql-editor-do-supabase). O programa de fidelidade depende de `scripts/migrate-loyalty.sql`.
+
 ## 🔗 Conectar Repositório GitHub
 
 ### Método 1: Via Interface Dokploy
@@ -268,9 +274,12 @@ Ou configure Dokploy para usar outra porta.
 
 ### Checklist
 
+> Checklist completo (env vars, ordem das migrações e verificação pós-deploy): [Checklist de Publicação](PUBLICACAO_CHECKLIST.md).
+
 - [ ] Dokploy instalado no servidor
 - [ ] Repositório GitHub conectado
 - [ ] Variáveis de ambiente configuradas
+- [ ] Migrações SQL aplicadas no Supabase, incluindo `scripts/migrate-loyalty.sql`
 - [ ] Dockerfile/docker-compose.yml testado localmente
 - [ ] Domínio configurado (DNS apontando para servidor)
 - [ ] Build bem-sucedido no Dokploy
