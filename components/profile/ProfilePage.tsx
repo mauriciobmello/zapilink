@@ -6,6 +6,7 @@ import type { Profile } from "@/types/profile";
 import { getProfileTheme } from "@/lib/profileTheme";
 import { CalendarIcon, StarIcon } from "@/components/icons";
 import InstallPrompt from "@/components/pwa/InstallPrompt";
+import Logo from "@/components/shared/Logo";
 import ProfileHeader from "./ProfileHeader";
 import BlockRenderer from "@/components/blocks/BlockRenderer";
 
@@ -83,9 +84,10 @@ export default function ProfilePage({
         <footer className="px-4 py-10 text-center">
           <a
             href="/"
-            className="text-sm font-medium text-gray-400 transition-colors hover:text-gray-600"
+            className="inline-flex items-center gap-2 text-sm font-medium text-gray-400 transition-colors hover:text-gray-600"
           >
-            Criado com ZAPILINK
+            Criado com
+            <Logo height={18} />
           </a>
         </footer>
       </div>

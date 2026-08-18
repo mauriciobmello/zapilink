@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Logo from "@/components/shared/Logo";
 import { getCurrentUser } from "@/lib/auth";
 
 export default async function Home() {
@@ -7,7 +8,9 @@ export default async function Home() {
   return (
     <main className="min-h-screen bg-gradient-page">
       <nav className="mx-auto flex max-w-6xl items-center justify-between px-4 py-6">
-        <span className="text-xl font-bold text-[#7C3AED]">ZAPILINK</span>
+        <Link href="/" aria-label="ZAPILINK">
+          <Logo height={36} priority />
+        </Link>
         <div className="flex items-center gap-4">
           {user ? (
             <Link
