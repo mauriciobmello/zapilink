@@ -45,10 +45,10 @@ export default function ProfilePage({
 
   return (
     <main className="min-h-screen" style={style}>
-      <div className="mx-auto max-w-6xl px-4 py-8">
-        <ProfileHeader profile={profile} theme={theme} />
+      <ProfileHeader profile={profile} theme={theme} />
+      <div className="mx-auto max-w-6xl px-4 py-6">
         {scheduleAgendaUrl && !hasScheduleButton(visibleBlocks) && (
-          <section aria-label="Agendar" className="px-4 py-4">
+          <section aria-label="Agendar" className="py-4">
             <div className="mx-auto max-w-5xl">
               <a
                 href={scheduleAgendaUrl}
@@ -61,7 +61,7 @@ export default function ProfilePage({
           </section>
         )}
         {loyaltyUrl && (
-          <section aria-label="Programa de fidelidade" className="px-4 py-4">
+          <section aria-label="Programa de fidelidade" className="py-4">
             <div className="mx-auto max-w-5xl">
               <a
                 href={loyaltyUrl}

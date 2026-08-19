@@ -65,7 +65,7 @@ export default function ProfileHeader({
 
         <div className="relative w-full">
           {profile.cover_url ? (
-            <div className="relative h-40 w-full sm:h-52">
+            <div className="relative h-44 w-full sm:h-56">
               <Image
                 src={profile.cover_url}
                 alt={`Capa de ${displayName}`}
@@ -76,7 +76,7 @@ export default function ProfileHeader({
               />
             </div>
           ) : (
-            <div className="h-40 w-full bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-accent)] sm:h-52" />
+            <div className="h-44 w-full bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-accent)] sm:h-56" />
           )}
 
           <div className="relative -mt-14 flex justify-center sm:-mt-16">
@@ -99,39 +99,41 @@ export default function ProfileHeader({
           </div>
         </div>
 
-        <h1 className="mt-5 text-3xl font-bold text-gray-900 sm:text-4xl">
-          {displayName}
-        </h1>
-        <p className="mt-1 text-sm font-semibold text-[var(--theme-primary)]">
-          @{profile.username}
-        </p>
-        {profile.description && (
-          <div 
-            className="mt-3 max-w-md text-base text-gray-600 prose prose-sm max-w-none"
-            dangerouslySetInnerHTML={{ __html: profile.description }}
-          />
-        )}
+        <div className="mx-auto w-full max-w-6xl px-4">
+          <h1 className="mt-5 text-3xl font-bold text-gray-900 sm:text-4xl">
+            {displayName}
+          </h1>
+          <p className="mt-1 text-sm font-semibold text-[var(--theme-primary)]">
+            @{profile.username}
+          </p>
+          {profile.description && (
+            <div
+              className="prose prose-sm mx-auto mt-3 max-w-2xl text-base text-gray-600"
+              dangerouslySetInnerHTML={{ __html: profile.description }}
+            />
+          )}
 
-        {socialLinks.length > 0 && (
-          <nav aria-label="Redes sociais" className="mt-5 flex gap-3">
-            {socialLinks.map((link) => (
-              <a
-                key={`${link.platform}-${link.url}`}
-                href={link.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={`${link.platform} de ${displayName}`}
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 shadow-card transition-colors hover:border-[var(--theme-primary)] hover:text-[var(--theme-primary)]"
-              >
-                {platformIcons[link.platform] ?? (
-                  <span className="text-xs font-bold uppercase">
-                    {link.platform.charAt(0)}
-                  </span>
-                )}
-              </a>
-            ))}
-          </nav>
-        )}
+          {socialLinks.length > 0 && (
+            <nav aria-label="Redes sociais" className="mt-5 flex justify-center gap-3">
+              {socialLinks.map((link) => (
+                <a
+                  key={`${link.platform}-${link.url}`}
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={`${link.platform} de ${displayName}`}
+                  className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 shadow-card transition-colors hover:border-[var(--theme-primary)] hover:text-[var(--theme-primary)]"
+                >
+                  {platformIcons[link.platform] ?? (
+                    <span className="text-xs font-bold uppercase">
+                      {link.platform.charAt(0)}
+                    </span>
+                  )}
+                </a>
+              ))}
+            </nav>
+          )}
+        </div>
       </header>
 
       <ShareModal
