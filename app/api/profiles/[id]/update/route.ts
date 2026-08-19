@@ -18,7 +18,7 @@ export async function POST(
 
     const { id: profileId } = await params;
     const body = await request.json();
-    const { username, name, description, photo_url } = body;
+    const { username, name, description, photo_url, cover_url } = body;
 
     const canEdit = await hasPermission(user.id, profileId, "profile.edit");
     if (!canEdit) {
@@ -41,6 +41,7 @@ export async function POST(
         name,
         description,
         photo_url,
+        cover_url,
       })
       .eq("id", profileId)
       .select()

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import type { Block } from "@/types/block";
 import type { Profile } from "@/types/profile";
 import { createBrowserClient } from "@/lib/supabase/client";
+import CoverUploader from "./CoverUploader";
 import PhotoUploader from "./PhotoUploader";
 import RichTextEditor from "./RichTextEditor";
 
@@ -53,6 +54,7 @@ export default function ProfileForm({ initialData, initialBlocks, canEdit = true
       name: data.name,
       description: data.description,
       photo_url: data.photo_url,
+      cover_url: data.cover_url,
     });
   }
 
@@ -81,6 +83,7 @@ export default function ProfileForm({ initialData, initialBlocks, canEdit = true
         name: form.name,
         description: form.description,
         photo_url: form.photo_url,
+        cover_url: form.cover_url,
       }),
     });
     const data = await res.json();
@@ -221,6 +224,36 @@ export default function ProfileForm({ initialData, initialBlocks, canEdit = true
           {errors.description && (
             <p className="mt-1 text-sm text-red-600">{errors.description}</p>
           )}
+        </div>
+
+        <div>
+          <label
+            htmlFor="cover_url"
+            className="mb-1 block text-sm font-medium text-gray-700"
+          >
+            Imagem de capa
+          </label>
+          <CoverUploader
+            userId={form.user_id}
+            coverUrl={form.cover_url}
+            onChange={(cover_url) => update({ cover_url })}
+            disabled={!canEdit}
+          />
+          <label
+            htmlFor="cover_url"
+            className="mb-1 mt-3 block text-xs text-gray-500"
+          >
+            ou insira a URL da imagem
+          </label>
+          <input
+            id="cover_url"
+            type="url"
+            value={form.cover_url ?? ""}
+            onChange={(e) => update({ cover_url: e.target.value })}
+            placeholder="https://..."
+            className={inputClass}
+            disabled={!canEdit}
+          />
         </div>
 
         <div>

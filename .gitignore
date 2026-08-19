@@ -40,3 +40,6 @@ next-env.d.ts
 /public/sw.js
 /public/workbox-*.js
 /public/fallback-*.js
+
+# ignore duplicate project folder
+/zapilink

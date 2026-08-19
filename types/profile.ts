@@ -18,6 +18,7 @@ export interface Profile {
   name: string | null;
   description: string | null;
   photo_url: string | null;
+  cover_url: string | null;
   theme_color: string | null;
   theme_accent: string | null;
   social_links: SocialLink[];

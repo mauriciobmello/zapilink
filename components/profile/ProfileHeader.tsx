@@ -53,7 +53,7 @@ export default function ProfileHeader({
 
   return (
     <>
-      <header className="relative flex flex-col items-center px-4 pt-12 text-center sm:pt-16">
+      <header className="relative flex flex-col items-center text-center">
         {/* Share Icon Button */}
         <button
           onClick={() => setShowShareModal(true)}
@@ -63,21 +63,40 @@ export default function ProfileHeader({
           <ShareIcon className="h-5 w-5" />
         </button>
 
-        <div className="rounded-full bg-gradient-to-br from-[var(--theme-primary)] to-[var(--theme-accent)] p-1.5 shadow-cardHover">
-          {profile.photo_url ? (
-            <Image
-              src={profile.photo_url}
-              alt={`Foto de perfil de ${displayName}`}
-              width={120}
-              height={120}
-              priority
-              className="h-24 w-24 rounded-full border-4 border-white object-cover sm:h-28 sm:w-28"
-            />
-          ) : (
-            <div className="flex h-24 w-24 items-center justify-center rounded-full border-4 border-white bg-white text-2xl font-bold text-[var(--theme-primary)] sm:h-28 sm:w-28">
-              {initials}
+        <div className="relative w-full">
+          {profile.cover_url ? (
+            <div className="relative h-40 w-full sm:h-52">
+              <Image
+                src={profile.cover_url}
+                alt={`Capa de ${displayName}`}
+                fill
+                priority
+                className="object-cover"
+                sizes="100vw"
+              />
             </div>
+          ) : (
+            <div className="h-40 w-full bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-accent)] sm:h-52" />
           )}
+
+          <div className="relative -mt-14 flex justify-center sm:-mt-16">
+            <div className="rounded-full bg-gradient-to-br from-[var(--theme-primary)] to-[var(--theme-accent)] p-1.5 shadow-cardHover">
+              {profile.photo_url ? (
+                <Image
+                  src={profile.photo_url}
+                  alt={`Foto de perfil de ${displayName}`}
+                  width={120}
+                  height={120}
+                  priority
+                  className="h-24 w-24 rounded-full border-4 border-white object-cover sm:h-28 sm:w-28"
+                />
+              ) : (
+                <div className="flex h-24 w-24 items-center justify-center rounded-full border-4 border-white bg-white text-2xl font-bold text-[var(--theme-primary)] sm:h-28 sm:w-28">
+                  {initials}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         <h1 className="mt-5 text-3xl font-bold text-gray-900 sm:text-4xl">
