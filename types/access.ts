@@ -19,7 +19,15 @@ export type Permission =
   | "loyalty.benefits.view"
   | "loyalty.benefits.redeem"
   | "loyalty.settings.edit"
-  | "page.publish";
+  | "page.publish"
+  | "crm.view"
+  | "crm.create"
+  | "crm.update"
+  | "crm.delete"
+  | "crm.export"
+  | "crm.import"
+  | "crm.tags.manage"
+  | "crm.segments.manage";
 
 export interface ProfileAccess {
   id: string;

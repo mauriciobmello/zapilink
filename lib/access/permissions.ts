@@ -43,6 +43,7 @@ export function groupPermissions(permissions: Permission[]) {
     bookings: permissions.filter((p) => p.startsWith("bookings.")),
     loyalty: permissions.filter((p) => p.startsWith("loyalty.")),
     page: permissions.filter((p) => p.startsWith("page.")),
+    crm: permissions.filter((p) => p.startsWith("crm.")),
   };
 }
 
@@ -70,6 +71,14 @@ export function getDefaultPermissions(role: "editor" | "content" | "full"): Perm
     "loyalty.benefits.redeem",
     "loyalty.settings.edit",
     "page.publish",
+    "crm.view",
+    "crm.create",
+    "crm.update",
+    "crm.delete",
+    "crm.export",
+    "crm.import",
+    "crm.tags.manage",
+    "crm.segments.manage",
   ];
 
   switch (role) {
@@ -177,6 +186,38 @@ export function getAllPermissions(): Record<string, { label: string; description
     "page.publish": {
       label: "Publicar página",
       description: "Permite publicar alterações",
+    },
+    "crm.view": {
+      label: "Visualizar CRM",
+      description: "Permite acessar a lista e o perfil dos clientes",
+    },
+    "crm.create": {
+      label: "Cadastrar clientes",
+      description: "Permite criar novos clientes",
+    },
+    "crm.update": {
+      label: "Editar clientes",
+      description: "Permite editar dados e tags dos clientes",
+    },
+    "crm.delete": {
+      label: "Excluir/inativar clientes",
+      description: "Permite inativar ou arquivar clientes",
+    },
+    "crm.export": {
+      label: "Exportar clientes",
+      description: "Permite exportar a base em CSV",
+    },
+    "crm.import": {
+      label: "Importar clientes",
+      description: "Permite importar clientes via CSV",
+    },
+    "crm.tags.manage": {
+      label: "Gerenciar tags",
+      description: "Permite criar, editar e excluir tags",
+    },
+    "crm.segments.manage": {
+      label: "Gerenciar segmentos",
+      description: "Permite criar, editar e excluir segmentos",
     },
   };
 }

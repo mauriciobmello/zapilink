@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getProfileOwnerEmail } from "@/lib/supabase/admin";
 import { getSiteUrl } from "@/lib/auth";
+import { upsertCustomerFromEvent } from "@/lib/crm/sync";
 import { sendEmail } from "@/lib/email";
 import { securityLogger } from "@/lib/security-logger";
 import {
@@ -214,6 +215,33 @@ export async function POST(
     slotStart: slotStart,
     inviteeEmail: email,
   });
+
+  try {
+    const customerId = await upsertCustomerFromEvent({
+      profileId: profile.id,
+      name,
+      phone,
+      email,
+      source: "agenda",
+    });
+    if (customerId) {
+      await admin.rpc("crm_register_event", {
+        p_profile_id: profile.id,
+        p_customer_id: customerId,
+        p_event_type: "appointment.created",
+        p_source: "agenda",
+        p_reference_id: booking.id,
+        p_description: `Agendamento solicitado para ${slotDate} às ${slotStart}`,
+        p_metadata: {
+          slot_date: slotDate,
+          slot_start_time: slotStart,
+          status: "pending",
+        },
+      });
+    }
+  } catch {
+    // Sincronização com CRM não invalida a reserva.
+  }
 
   try {
     await sendEmail({

@@ -40,6 +40,14 @@ const ALL_PERMISSIONS: Permission[] = [
   "loyalty.benefits.redeem",
   "loyalty.settings.edit",
   "page.publish",
+  "crm.view",
+  "crm.create",
+  "crm.update",
+  "crm.delete",
+  "crm.export",
+  "crm.import",
+  "crm.tags.manage",
+  "crm.segments.manage",
 ];
 
 export async function getOrCreateProfile(userId: string): Promise<Profile> {

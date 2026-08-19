@@ -13,6 +13,7 @@ const NAV_LINKS = [
   { href: "/dashboard/edit", label: "Editar Perfil" },
   { href: "/dashboard/schedule", label: "Agenda" },
   { href: "/dashboard/loyalty", label: "Fidelidade" },
+  { href: "/dashboard/crm", label: "CRM" },
   { href: "/dashboard/preview", label: "Preview" },
 ];
 
@@ -25,10 +26,11 @@ function DashboardNav() {
     profileId ? `${href}?profileId=${encodeURIComponent(profileId)}` : href;
 
   // Only show navigation links and profile switcher on edit/schedule/preview pages, not on main dashboard
-  const showNavElements = pathname === "/dashboard/edit" || 
-                          pathname === "/dashboard/schedule" || 
+  const showNavElements = pathname === "/dashboard/edit" ||
+                          pathname === "/dashboard/schedule" ||
                           pathname === "/dashboard/preview" ||
-                          pathname.startsWith("/dashboard/loyalty");
+                          pathname.startsWith("/dashboard/loyalty") ||
+                          pathname.startsWith("/dashboard/crm");
 
   return (
     <nav className="border-b border-gray-100 bg-white">

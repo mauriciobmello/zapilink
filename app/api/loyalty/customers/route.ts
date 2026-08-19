@@ -8,6 +8,7 @@ import {
   logLoyaltyEvent,
   requireLoyaltyAdmin,
 } from "@/lib/loyalty/server";
+import { upsertCustomerFromEvent } from "@/lib/crm/sync";
 import type { LoyaltyCustomer } from "@/types/loyalty";
 
 export const dynamic = "force-dynamic";
@@ -109,6 +110,28 @@ export async function POST(request: Request) {
       customerId: customer.id,
       metadata: { source: "dashboard" },
     });
+
+    try {
+      const crmCustomerId = await upsertCustomerFromEvent({
+        profileId,
+        name,
+        phone,
+        email,
+        source: "fidelity",
+      });
+      if (crmCustomerId) {
+        await admin.rpc("crm_register_event", {
+          p_profile_id: profileId,
+          p_customer_id: crmCustomerId,
+          p_event_type: "loyalty.updated",
+          p_source: "fidelity",
+          p_reference_id: customer.id,
+          p_description: "Cliente adicionado ao programa de fidelidade",
+        });
+      }
+    } catch {
+      // Sincronização com CRM não invalida o cadastro de fidelidade.
+    }
 
     await sendLoyaltyWelcomeEmail(customer, program);
 
