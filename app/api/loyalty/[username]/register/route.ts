@@ -6,6 +6,7 @@ import {
   getActiveProgramByUsername,
   logLoyaltyEvent,
 } from "@/lib/loyalty/server";
+import { syncCrmLoyaltyPoints, upsertCustomerFromEvent } from "@/lib/crm/sync";
 import type { LoyaltyCustomer } from "@/types/loyalty";
 
 export const dynamic = "force-dynamic";
@@ -79,6 +80,18 @@ export async function POST(
         programId: program.id,
         customerId: customer.id,
       });
+
+      try {
+        await upsertCustomerFromEvent({
+          profileId,
+          name,
+          phone,
+          email,
+          source: "fidelidade",
+        });
+      } catch {
+        // Sincronização com CRM não invalida o cadastro.
+      }
     }
 
     const { data: member } = await admin
@@ -108,6 +121,12 @@ export async function POST(
           metadata: { source: "public" },
         });
       }
+    }
+
+    try {
+      await syncCrmLoyaltyPoints(profileId, customer.id, 0);
+    } catch {
+      // Sincronização com CRM não invalida o cadastro.
     }
 
     return NextResponse.json(NEUTRAL_RESPONSE);
