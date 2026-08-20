@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatPhone, formatCurrency } from "@/lib/crm/format";
-import type { CustomerSummary } from "@/types/crm";
+import type { CustomerSummary, CustomerTag, CustomerNote, CustomerEvent } from "@/types/crm";
 import type { CustomerLoyaltyInfo } from "@/lib/crm/server";
+import type { Booking } from "@/types/schedule";
 
 interface CustomerDetailProps {
   profileId: string;
@@ -18,7 +19,20 @@ const STATUS_LABEL: Record<string, string> = {
   archived: "Arquivado",
 };
 
-const TABS = ["Resumo", "Dados", "Fidelidade"] as const;
+const TABS = ["Resumo", "Dados", "Fidelidade", "Agenda", "Histórico", "Observações"] as const;
+
+const EVENT_ICONS: Record<string, string> = {
+  customer_created: "👤",
+  customer_updated: "✏️",
+  appointment_created: "📅",
+  appointment_completed: "✅",
+  loyalty_updated: "⭐",
+  coupon_redeemed: "🎟️",
+  tag_added: "🏷️",
+  tag_removed: "🏷️",
+  note_created: "📝",
+  purchase_completed: "🛒",
+};
 
 export default function CustomerDetail({
   profileId,
@@ -29,6 +43,64 @@ export default function CustomerDetail({
   const [activeTab, setActiveTab] = useState<(typeof TABS)[number]>("Resumo");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [tags, setTags] = useState<CustomerTag[]>(customer.tags ?? []);
+  const [allTags, setAllTags] = useState<CustomerTag[]>([]);
+  const [newTagName, setNewTagName] = useState("");
+
+  const [notes, setNotes] = useState<CustomerNote[]>([]);
+  const [newNote, setNewNote] = useState("");
+
+  const [events, setEvents] = useState<CustomerEvent[]>([]);
+  const [appointments, setAppointments] = useState<Booking[]>([]);
+
+  useEffect(() => {
+    if (activeTab === "Observações") loadNotes();
+    if (activeTab === "Histórico") loadEvents();
+    if (activeTab === "Agenda") loadAppointments();
+  }, [activeTab, customer.id, profileId]);
+
+  useEffect(() => {
+    loadAllTags();
+  }, [profileId]);
+
+  async function loadAllTags() {
+    try {
+      const res = await fetch(`/api/crm/tags?profileId=${encodeURIComponent(profileId)}`);
+      const data = await res.json();
+      if (res.ok) setAllTags(data.tags ?? []);
+    } catch {}
+  }
+
+  async function loadNotes() {
+    try {
+      const res = await fetch(
+        `/api/crm/customers/${customer.id}/notes?profileId=${encodeURIComponent(profileId)}`,
+      );
+      const data = await res.json();
+      if (res.ok) setNotes(data.notes ?? []);
+    } catch {}
+  }
+
+  async function loadEvents() {
+    try {
+      const res = await fetch(
+        `/api/crm/customers/${customer.id}/events?profileId=${encodeURIComponent(profileId)}`,
+      );
+      const data = await res.json();
+      if (res.ok) setEvents(data.events ?? []);
+    } catch {}
+  }
+
+  async function loadAppointments() {
+    try {
+      const res = await fetch(
+        `/api/crm/customers/${customer.id}/appointments?profileId=${encodeURIComponent(profileId)}`,
+      );
+      const data = await res.json();
+      if (res.ok) setAppointments(data.appointments ?? []);
+    } catch {}
+  }
 
   async function handleInactivate() {
     if (!confirm("Deseja inativar este cliente?")) return;
@@ -51,6 +123,89 @@ export default function CustomerDetail({
     }
   }
 
+  async function addTag(tagId: string) {
+    setError(null);
+    try {
+      const res = await fetch(`/api/crm/customers/${customer.id}/tags`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ profileId, tagId }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error ?? "Não foi possível adicionar a tag.");
+        return;
+      }
+      const tag = allTags.find((t) => t.id === tagId);
+      if (tag) setTags((prev) => [...prev, tag]);
+    } catch {
+      setError("Falha de conexão.");
+    }
+  }
+
+  async function removeTag(tagId: string) {
+    setError(null);
+    try {
+      const res = await fetch(
+        `/api/crm/customers/${customer.id}/tags?profileId=${encodeURIComponent(profileId)}&tagId=${encodeURIComponent(tagId)}`,
+        { method: "DELETE" },
+      );
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error ?? "Não foi possível remover a tag.");
+        return;
+      }
+      setTags((prev) => prev.filter((t) => t.id !== tagId));
+    } catch {
+      setError("Falha de conexão.");
+    }
+  }
+
+  async function createTag() {
+    if (!newTagName.trim()) return;
+    setError(null);
+    try {
+      const res = await fetch("/api/crm/tags", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ profileId, name: newTagName.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error ?? "Não foi possível criar a tag.");
+        return;
+      }
+      setAllTags((prev) => [...prev, data.tag]);
+      await addTag(data.tag.id);
+      setNewTagName("");
+    } catch {
+      setError("Falha de conexão.");
+    }
+  }
+
+  async function addNote() {
+    if (!newNote.trim()) return;
+    setError(null);
+    try {
+      const res = await fetch(`/api/crm/customers/${customer.id}/notes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ profileId, content: newNote.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error ?? "Não foi possível adicionar a observação.");
+        return;
+      }
+      setNotes((prev) => [data.note, ...prev]);
+      setNewNote("");
+    } catch {
+      setError("Falha de conexão.");
+    }
+  }
+
+  const availableTags = allTags.filter((t) => !tags.some((ct) => ct.id === t.id));
+
   return (
     <div className="space-y-6">
       <div className="rounded-card bg-white p-6 shadow-card">
@@ -72,18 +227,46 @@ export default function CustomerDetail({
               >
                 {STATUS_LABEL[customer.status] ?? customer.status}
               </span>
-              {customer.tags?.map((tag) => (
+              {tags.map((tag) => (
                 <span
                   key={tag.id}
-                  className="rounded-full px-2 py-0.5 text-xs font-medium"
+                  className="inline-flex cursor-pointer items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium"
                   style={{
                     backgroundColor: tag.color ?? "#7C3AED",
                     color: "#fff",
                   }}
+                  onClick={() => removeTag(tag.id)}
+                  title="Clique para remover"
                 >
-                  {tag.name}
+                  {tag.name} ×
                 </span>
               ))}
+            </div>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <select
+                value=""
+                onChange={(e) => e.target.value && addTag(e.target.value)}
+                className="h-9 rounded-card border border-gray-200 bg-white px-2 text-sm outline-none focus:border-[#7C3AED]"
+              >
+                <option value="">+ Adicionar tag</option>
+                {availableTags.map((tag) => (
+                  <option key={tag.id} value={tag.id}>
+                    {tag.name}
+                  </option>
+                ))}
+              </select>
+              <input
+                value={newTagName}
+                onChange={(e) => setNewTagName(e.target.value)}
+                placeholder="Nova tag"
+                className="h-9 w-32 rounded-card border border-gray-200 px-2 text-sm outline-none focus:border-[#7C3AED]"
+              />
+              <button
+                onClick={createTag}
+                className="h-9 rounded-card bg-[#7C3AED] px-3 text-sm font-medium text-white hover:brightness-110"
+              >
+                Criar
+              </button>
             </div>
           </div>
           <button
@@ -103,7 +286,7 @@ export default function CustomerDetail({
       )}
 
       <div className="border-b border-gray-200">
-        <nav className="-mb-px flex gap-6" aria-label="Tabs">
+        <nav className="-mb-px flex flex-wrap gap-4 sm:gap-6" aria-label="Tabs">
           {TABS.map((tab) => (
             <button
               key={tab}
@@ -156,6 +339,23 @@ export default function CustomerDetail({
 
       {activeTab === "Fidelidade" && (
         <LoyaltyTab customer={customer} loyalty={loyalty} />
+      )}
+
+      {activeTab === "Agenda" && (
+        <AgendaTab appointments={appointments} />
+      )}
+
+      {activeTab === "Histórico" && (
+        <HistoryTab events={events} />
+      )}
+
+      {activeTab === "Observações" && (
+        <NotesTab
+          notes={notes}
+          newNote={newNote}
+          setNewNote={setNewNote}
+          onAdd={addNote}
+        />
       )}
     </div>
   );
@@ -263,6 +463,135 @@ function LoyaltyTab({
               </li>
             ))}
           </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AgendaTab({ appointments }: { appointments: Booking[] }) {
+  if (appointments.length === 0) {
+    return (
+      <div className="rounded-card bg-white p-10 text-center shadow-card">
+        <p className="text-gray-500">Nenhum agendamento encontrado.</p>
+      </div>
+    );
+  }
+
+  const STATUS: Record<string, string> = {
+    pending: "Pendente",
+    approved: "Aprovado",
+    declined: "Recusado",
+  };
+
+  return (
+    <div className="rounded-card bg-white p-6 shadow-card">
+      <h3 className="text-lg font-semibold text-gray-900">Agendamentos</h3>
+      <ul className="mt-3 space-y-2">
+        {appointments.map((appointment) => (
+          <li
+            key={appointment.id}
+            className="flex flex-col gap-1 rounded-card bg-gray-50 p-3 sm:flex-row sm:items-center sm:justify-between"
+          >
+            <div>
+              <p className="font-medium text-gray-900">
+                {new Date(appointment.slot_date).toLocaleDateString("pt-BR")} ·{" "}
+                {appointment.slot_start_time.slice(0, 5)}
+              </p>
+              <p className="text-sm text-gray-500">
+                {appointment.invitee_name} · {appointment.invitee_email}
+              </p>
+            </div>
+            <span className="rounded-full px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-700">
+              {STATUS[appointment.status] ?? appointment.status}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function HistoryTab({ events }: { events: CustomerEvent[] }) {
+  if (events.length === 0) {
+    return (
+      <div className="rounded-card bg-white p-10 text-center shadow-card">
+        <p className="text-gray-500">Nenhum evento no histórico.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {events.map((event) => (
+        <div
+          key={event.id}
+          className="flex gap-3 rounded-card bg-white p-4 shadow-card"
+        >
+          <span className="text-xl">{EVENT_ICONS[event.event_type] ?? "•"}</span>
+          <div className="flex-1">
+            <p className="font-medium text-gray-900">
+              {event.description ?? event.event_type}
+            </p>
+            <p className="text-sm text-gray-500">
+              {new Date(event.created_at).toLocaleString("pt-BR")} ·{" "}
+              <span className="capitalize">{event.source}</span>
+            </p>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function NotesTab({
+  notes,
+  newNote,
+  setNewNote,
+  onAdd,
+}: {
+  notes: CustomerNote[];
+  newNote: string;
+  setNewNote: (value: string) => void;
+  onAdd: () => void;
+}) {
+  return (
+    <div className="space-y-4">
+      <div className="flex gap-2">
+        <input
+          value={newNote}
+          onChange={(e) => setNewNote(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && onAdd()}
+          placeholder="Adicionar observação interna"
+          className="h-12 flex-1 rounded-card border border-gray-200 px-3 outline-none focus:border-[#7C3AED]"
+        />
+        <button
+          onClick={onAdd}
+          className="h-12 rounded-card bg-[#7C3AED] px-4 font-medium text-white hover:brightness-110"
+        >
+          Adicionar
+        </button>
+      </div>
+
+      {notes.length === 0 ? (
+        <div className="rounded-card bg-white p-10 text-center shadow-card">
+          <p className="text-gray-500">Nenhuma observação.</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {notes.map((note) => (
+            <div
+              key={note.id}
+              className="rounded-card bg-white p-4 shadow-card"
+            >
+              <p className="whitespace-pre-wrap text-sm text-gray-900">
+                {note.content}
+              </p>
+              <p className="mt-2 text-xs text-gray-500">
+                {new Date(note.created_at).toLocaleString("pt-BR")}
+              </p>
+            </div>
+          ))}
         </div>
       )}
     </div>
