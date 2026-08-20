@@ -5,6 +5,7 @@ import { canAccessProfile } from "@/lib/access/authorization";
 import type { Permission } from "@/types/access";
 import type { Profile } from "@/types/profile";
 import { balanceForCycle, benefitState } from "@/lib/loyalty/progress";
+import { normalizePhone } from "@/lib/crm/format";
 import type { Customer, CustomerSummary } from "@/types/crm";
 import type {
   LoyaltyBenefitRedemption,
@@ -249,8 +250,9 @@ export async function getCustomerLoyaltyInfo(
   const admin = createAdminClient();
 
   const orFilters: string[] = [];
-  if (customer.phone) orFilters.push(`phone.eq.${customer.phone}`);
-  if (customer.email) orFilters.push(`email.eq.${customer.email}`);
+  const normalizedPhone = customer.phone ? normalizePhone(customer.phone) : null;
+  if (normalizedPhone) orFilters.push(`phone.eq.${normalizedPhone}`);
+  if (customer.email) orFilters.push(`email.eq.${customer.email.toLowerCase()}`);
   if (orFilters.length === 0) return null;
 
   const { data: loyaltyCustomer } = await admin

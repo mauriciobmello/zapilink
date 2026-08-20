@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireCrmAdmin, getCustomer, CrmError } from "@/lib/crm/server";
 import { crmErrorResponse, readJsonBody, readString, readOptionalString } from "@/lib/crm/http";
+import { normalizePhone } from "@/lib/crm/format";
 import type { Customer } from "@/types/crm";
 
 export const dynamic = "force-dynamic";
@@ -36,11 +37,14 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       if (!name) throw new CrmError("Nome não pode ser vazio.", 400);
       updates.name = name;
     }
-    const phone = readOptionalString(body, "phone")?.trim() ?? null;
+    const rawPhone = readOptionalString(body, "phone")?.trim();
+    const phone = rawPhone ? normalizePhone(rawPhone) : null;
     if (phone !== undefined) updates.phone = phone;
-    const email = readOptionalString(body, "email")?.trim() ?? null;
+    const rawEmail = readOptionalString(body, "email")?.trim();
+    const email = rawEmail ? rawEmail.toLowerCase() : null;
     if (email !== undefined) updates.email = email;
-    const cpf = readOptionalString(body, "cpf")?.trim() ?? null;
+    const rawCpf = readOptionalString(body, "cpf")?.trim();
+    const cpf = rawCpf ? rawCpf.replace(/\D/g, "") : null;
     if (cpf !== undefined) updates.cpf = cpf;
     const birthDate = readOptionalString(body, "birthDate");
     if (birthDate !== undefined) updates.birth_date = birthDate;

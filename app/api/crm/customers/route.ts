@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireCrmAdmin, listCustomers, CrmError } from "@/lib/crm/server";
 import { crmErrorResponse, readJsonBody, readString } from "@/lib/crm/http";
+import { normalizePhone } from "@/lib/crm/format";
 import type { Customer } from "@/types/crm";
 
 export const dynamic = "force-dynamic";
@@ -39,9 +40,11 @@ export async function POST(request: Request) {
     );
 
     const name = readString(body, "name")?.trim();
-    const phone = readString(body, "phone")?.trim() ?? null;
-    const email = readString(body, "email")?.trim() ?? null;
-    const cpf = readString(body, "cpf")?.trim() ?? null;
+    const rawPhone = readString(body, "phone")?.trim();
+    const phone = rawPhone ? normalizePhone(rawPhone) : null;
+    const rawEmail = readString(body, "email")?.trim();
+    const email = rawEmail ? rawEmail.toLowerCase() : null;
+    const cpf = readString(body, "cpf")?.trim().replace(/\D/g, "") ?? null;
     const birthDate = readString(body, "birthDate") ?? null;
     const origin = readString(body, "origin")?.trim() ?? "manual";
 
