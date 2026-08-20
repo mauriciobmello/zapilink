@@ -168,10 +168,10 @@ export default function CustomerForm({ profileId }: CustomerFormProps) {
           <option value="site">Site</option>
           <option value="indication">Indicação</option>
           <option value="agenda">Agenda</option>
-          <option value="fidelity">Fidelidade</option>
-          <option value="coupon">Cupom</option>
-          <option value="import">Importação</option>
-          <option value="other">Outro</option>
+          <option value="fidelidade">Fidelidade</option>
+          <option value="cupom">Cupom</option>
+          <option value="importacao">Importação</option>
+          <option value="outro">Outro</option>
         </select>
       </div>
 

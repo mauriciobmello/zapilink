@@ -117,14 +117,14 @@ export async function POST(request: Request) {
         name,
         phone,
         email,
-        source: "fidelity",
+        source: "fidelidade",
       });
       if (crmCustomerId) {
         await admin.rpc("crm_register_event", {
           p_profile_id: profileId,
           p_customer_id: crmCustomerId,
           p_event_type: "loyalty.updated",
-          p_source: "fidelity",
+          p_source: "fidelidade",
           p_reference_id: customer.id,
           p_description: "Cliente adicionado ao programa de fidelidade",
         });

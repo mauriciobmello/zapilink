@@ -1,15 +1,32 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { normalizePhone } from "@/lib/crm/format";
 
-type CustomerSource = "agenda" | "fidelity" | "manual" | "other";
+type CustomerSource = "agenda" | "fidelidade" | "manual" | "outro";
 
-export async function upsertCustomerFromEvent(input: {
+interface UpsertInput {
   profileId: string;
   name: string;
   phone?: string | null;
   email?: string | null;
   source: CustomerSource;
-}): Promise<string | null> {
+}
+
+function displayName(input: CustomerSource): string {
+  switch (input) {
+    case "agenda":
+      return "Agenda";
+    case "fidelidade":
+      return "Fidelidade";
+    case "manual":
+      return "Cadastro manual";
+    default:
+      return "Outro";
+  }
+}
+
+export async function upsertCustomerFromEvent(
+  input: UpsertInput,
+): Promise<string | null> {
   const { profileId, name, phone, email, source } = input;
   const admin = createAdminClient();
 
@@ -20,20 +37,47 @@ export async function upsertCustomerFromEvent(input: {
     return null;
   }
 
-  // Tenta localizar um cliente existente no CRM pelo telefone ou e-mail.
   const filters: string[] = [];
   if (normalizedPhone) filters.push(`phone.eq.${normalizedPhone}`);
   if (normalizedEmail) filters.push(`email.eq.${normalizedEmail}`);
 
   const { data: existing } = await admin
     .from("customers")
-    .select("id")
+    .select("id, name, origin")
     .eq("profile_id", profileId)
     .is("deleted_at", null)
     .or(filters.join(","))
     .maybeSingle();
 
   if (existing) {
+    // Atualiza o nome e, quando a origem for Fidelidade/Agenda, marca a
+    // fonte real de aquisição. Nunca sobrescreve "manual" por "outro".
+    const updates: Record<string, unknown> = { name: name.trim() };
+    const currentOrigin = (existing.origin ?? "manual") as CustomerSource;
+    if (
+      source === "fidelidade" ||
+      source === "agenda" ||
+      currentOrigin === "manual"
+    ) {
+      updates.origin = source;
+    }
+
+    const { error } = await admin
+      .from("customers")
+      .update(updates)
+      .eq("id", existing.id)
+      .eq("profile_id", profileId);
+
+    if (!error) {
+      await admin.rpc("crm_register_event", {
+        p_profile_id: profileId,
+        p_customer_id: existing.id,
+        p_event_type: source === "fidelidade" ? "loyalty.updated" : "customer.updated",
+        p_source: source,
+        p_description: `Cliente vinculado à origem ${displayName(source)}`,
+      });
+    }
+
     return existing.id;
   }
 
@@ -58,7 +102,7 @@ export async function upsertCustomerFromEvent(input: {
     p_customer_id: customer.id,
     p_event_type: "customer.created",
     p_source: source,
-    p_description: `Cliente criado a partir de ${source}`,
+    p_description: `Cliente criado a partir de ${displayName(source)}`,
   });
 
   return customer.id;
