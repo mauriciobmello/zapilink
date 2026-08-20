@@ -4,10 +4,12 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatPhone, formatCurrency } from "@/lib/crm/format";
 import type { CustomerSummary } from "@/types/crm";
+import type { CustomerLoyaltyInfo } from "@/lib/crm/server";
 
 interface CustomerDetailProps {
   profileId: string;
   customer: CustomerSummary;
+  loyalty: CustomerLoyaltyInfo | null;
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -16,11 +18,12 @@ const STATUS_LABEL: Record<string, string> = {
   archived: "Arquivado",
 };
 
-const TABS = ["Resumo", "Dados"] as const;
+const TABS = ["Resumo", "Dados", "Fidelidade"] as const;
 
 export default function CustomerDetail({
   profileId,
   customer,
+  loyalty,
 }: CustomerDetailProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<(typeof TABS)[number]>("Resumo");
@@ -148,6 +151,118 @@ export default function CustomerDetail({
               </dd>
             </div>
           )}
+        </div>
+      )}
+
+      {activeTab === "Fidelidade" && (
+        <LoyaltyTab customer={customer} loyalty={loyalty} />
+      )}
+    </div>
+  );
+}
+
+function LoyaltyTab({
+  customer,
+  loyalty,
+}: {
+  customer: CustomerSummary;
+  loyalty: CustomerLoyaltyInfo | null;
+}) {
+  if (!loyalty || !loyalty.program) {
+    return (
+      <div className="rounded-card bg-white p-10 text-center shadow-card">
+        <p className="text-gray-500">
+          Nenhum programa de fidelidade configurado para este negócio.
+        </p>
+      </div>
+    );
+  }
+
+  if (!loyalty.customer) {
+    return (
+      <div className="rounded-card bg-white p-10 text-center shadow-card">
+        <p className="text-gray-500">
+          Cliente ainda não participa do programa {loyalty.program.name}.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-card bg-white p-6 shadow-card">
+        <h3 className="text-lg font-semibold text-gray-900">
+          {loyalty.program.name}
+        </h3>
+        <p className="mt-1 text-sm text-gray-500">
+          {loyalty.program.description || "Sem descrição"}
+        </p>
+
+        <div className="mt-4 grid gap-4 sm:grid-cols-3">
+          <div>
+            <p className="text-sm text-gray-500">Estrelas atuais</p>
+            <p className="text-2xl font-bold text-[#7C3AED]">
+              {loyalty.stars_current}
+            </p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-500">Meta</p>
+            <p className="text-2xl font-bold text-gray-900">
+              {loyalty.stars_required}
+            </p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-500">Status</p>
+            <p className="text-2xl font-bold text-gray-900">
+              {loyalty.benefit_state === "completed"
+                ? "Benefício disponível"
+                : "Em progresso"}
+            </p>
+          </div>
+        </div>
+
+        {loyalty.benefit_state === "completed" && (
+          <div className="mt-4 rounded-card bg-green-50 p-4">
+            <p className="text-sm font-medium text-green-800">
+              Próximo benefício:
+            </p>
+            <p className="text-green-900">
+              {loyalty.program.benefit_description || "Benefício do programa"}
+            </p>
+          </div>
+        )}
+
+        {loyalty.last_transaction_at && (
+          <p className="mt-4 text-sm text-gray-500">
+            Última movimentação: {" "}
+            {new Date(loyalty.last_transaction_at).toLocaleDateString("pt-BR")}
+          </p>
+        )}
+      </div>
+
+      {loyalty.redemptions.length > 0 && (
+        <div className="rounded-card bg-white p-6 shadow-card">
+          <h3 className="text-lg font-semibold text-gray-900">Resgates</h3>
+          <ul className="mt-3 space-y-2">
+            {loyalty.redemptions.map((redemption) => (
+              <li
+                key={redemption.id}
+                className="flex items-center justify-between rounded-card bg-gray-50 p-3"
+              >
+                <div>
+                  <p className="font-medium text-gray-900">
+                    {redemption.benefit_description || "Benefício resgatado"}
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    {redemption.stars_used} estrelas
+                  </p>
+                </div>
+                <span className="text-sm text-gray-500">
+                  {new Date(redemption.redeemed_at).toLocaleDateString("pt-BR")}
+                </span>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
     </div>

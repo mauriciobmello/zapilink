@@ -4,7 +4,14 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { canAccessProfile } from "@/lib/access/authorization";
 import type { Permission } from "@/types/access";
 import type { Profile } from "@/types/profile";
+import { balanceForCycle, benefitState } from "@/lib/loyalty/progress";
 import type { Customer, CustomerSummary } from "@/types/crm";
+import type {
+  LoyaltyBenefitRedemption,
+  LoyaltyProgram,
+  LoyaltyProgramMember,
+  LoyaltyStarTransaction,
+} from "@/types/loyalty";
 
 export class CrmError extends Error {
   status: number;
@@ -222,5 +229,90 @@ export async function getCrmMetrics(profileId: string): Promise<CrmMetrics> {
     new: newCustomers,
     inactive,
     vip: rows.filter((c) => c.is_vip).length,
+  };
+}
+
+export interface CustomerLoyaltyInfo {
+  customer: LoyaltyProgramMember | null;
+  program: LoyaltyProgram | null;
+  stars_current: number;
+  stars_required: number;
+  benefit_state: "progress" | "completed" | "redeemed";
+  redemptions: LoyaltyBenefitRedemption[];
+  last_transaction_at: string | null;
+}
+
+export async function getCustomerLoyaltyInfo(
+  profileId: string,
+  customer: Customer,
+): Promise<CustomerLoyaltyInfo | null> {
+  const admin = createAdminClient();
+
+  const orFilters: string[] = [];
+  if (customer.phone) orFilters.push(`phone.eq.${customer.phone}`);
+  if (customer.email) orFilters.push(`email.eq.${customer.email}`);
+  if (orFilters.length === 0) return null;
+
+  const { data: loyaltyCustomer } = await admin
+    .from("loyalty_customers")
+    .select("id")
+    .eq("profile_id", profileId)
+    .or(orFilters.join(","))
+    .maybeSingle();
+  if (!loyaltyCustomer) return null;
+
+  const { data: program } = await admin
+    .from("loyalty_programs")
+    .select("*")
+    .eq("profile_id", profileId)
+    .maybeSingle();
+  if (!program) return null;
+
+  const { data: member } = await admin
+    .from("loyalty_program_members")
+    .select("*")
+    .eq("program_id", program.id)
+    .eq("customer_id", loyaltyCustomer.id)
+    .maybeSingle();
+
+  if (!member) {
+    return {
+      customer: null,
+      program: program as LoyaltyProgram,
+      stars_current: 0,
+      stars_required: program.stars_required,
+      benefit_state: "progress",
+      redemptions: [],
+      last_transaction_at: null,
+    };
+  }
+
+  const { data: transactions } = await admin
+    .from("loyalty_star_transactions")
+    .select("*")
+    .eq("program_member_id", member.id)
+    .order("granted_at", { ascending: false });
+
+  const { data: redemptions } = await admin
+    .from("loyalty_benefit_redemptions")
+    .select("*")
+    .eq("program_member_id", member.id)
+    .order("redeemed_at", { ascending: false });
+
+  const stars = balanceForCycle(
+    (transactions ?? []) as LoyaltyStarTransaction[],
+    member.current_cycle,
+  );
+
+  const lastTx = (transactions ?? [])[0] as LoyaltyStarTransaction | undefined;
+
+  return {
+    customer: member as LoyaltyProgramMember,
+    program: program as LoyaltyProgram,
+    stars_current: stars,
+    stars_required: program.stars_required,
+    benefit_state: benefitState(stars, program.stars_required),
+    redemptions: (redemptions ?? []) as LoyaltyBenefitRedemption[],
+    last_transaction_at: lastTx?.granted_at ?? null,
   };
 }

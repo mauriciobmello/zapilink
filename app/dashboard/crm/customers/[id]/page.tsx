@@ -1,7 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
-import { getCustomer, requireCrmProfilePage } from "@/lib/crm/server";
+import {
+  getCustomer,
+  getCustomerLoyaltyInfo,
+  requireCrmProfilePage,
+} from "@/lib/crm/server";
 import CustomerDetail from "@/components/dashboard/crm/CustomerDetail";
 
 export const dynamic = "force-dynamic";
@@ -23,6 +27,8 @@ export default async function CrmCustomerDetailPage({
     notFound();
   }
 
+  const loyalty = await getCustomerLoyaltyInfo(profile.id, customer);
+
   return (
     <div className="space-y-6">
       <Link
@@ -32,7 +38,11 @@ export default async function CrmCustomerDetailPage({
         ← Clientes
       </Link>
 
-      <CustomerDetail profileId={profile.id} customer={customer} />
+      <CustomerDetail
+        profileId={profile.id}
+        customer={customer}
+        loyalty={loyalty}
+      />
     </div>
   );
 }
