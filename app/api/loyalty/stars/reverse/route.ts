@@ -7,6 +7,7 @@ import {
   requireMemberInProgram,
   rpcErrorStatus,
 } from "@/lib/loyalty/server";
+import { syncCrmLoyaltyPoints } from "@/lib/crm/sync";
 
 export const dynamic = "force-dynamic";
 
@@ -79,6 +80,19 @@ export async function POST(request: Request) {
         reason,
       },
     });
+
+    try {
+      const { data: balance } = await admin.rpc("loyalty_member_balance", {
+        p_member_id: member.id,
+      });
+      await syncCrmLoyaltyPoints(
+        profileId,
+        member.customer_id,
+        balance ?? 0,
+      );
+    } catch {
+      // Sincronização com CRM não invalida a operação.
+    }
 
     return NextResponse.json({ transaction });
   } catch (error) {

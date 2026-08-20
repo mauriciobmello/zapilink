@@ -107,3 +107,50 @@ export async function upsertCustomerFromEvent(
 
   return customer.id;
 }
+
+export async function syncCrmLoyaltyPoints(
+  profileId: string,
+  loyaltyCustomerId: string,
+  points: number,
+): Promise<void> {
+  const admin = createAdminClient();
+
+  const { data: loyaltyCustomer } = await admin
+    .from("loyalty_customers")
+    .select("name, phone, email")
+    .eq("id", loyaltyCustomerId)
+    .eq("profile_id", profileId)
+    .maybeSingle();
+  if (!loyaltyCustomer) return;
+
+  const normalizedPhone = loyaltyCustomer.phone
+    ? normalizePhone(loyaltyCustomer.phone)
+    : null;
+  const normalizedEmail = loyaltyCustomer.email
+    ? loyaltyCustomer.email.trim().toLowerCase()
+    : null;
+
+  const filters: string[] = [];
+  if (normalizedPhone) filters.push(`phone.eq.${normalizedPhone}`);
+  if (normalizedEmail) filters.push(`email.eq.${normalizedEmail}`);
+  if (filters.length === 0) return;
+
+  const { data: customer } = await admin
+    .from("customers")
+    .select("id")
+    .eq("profile_id", profileId)
+    .is("deleted_at", null)
+    .or(filters.join(","))
+    .maybeSingle();
+  if (!customer) return;
+
+  await admin.rpc("crm_register_event", {
+    p_profile_id: profileId,
+    p_customer_id: customer.id,
+    p_event_type: "loyalty.updated",
+    p_source: "fidelidade",
+    p_reference_id: loyaltyCustomerId,
+    p_description: `Pontos de fidelidade atualizados: ${points}`,
+    p_metadata: { points },
+  });
+}
