@@ -36,7 +36,7 @@ export default async function ModulesSettingsPage({
   const admin = createAdminClient();
   const { data, error } = await admin
     .from("profiles")
-    .select("enabled_modules")
+    .select("name, enabled_modules")
     .eq("id", profileId)
     .maybeSingle();
 
@@ -72,7 +72,7 @@ export default async function ModulesSettingsPage({
           Habilitar módulos
         </h1>
         <p className="mt-1 text-sm text-gray-500">
-          Escolha quais módulos aparecerão no painel deste perfil.
+          Perfil: <span className="font-medium text-gray-900">{data.name || "Sem nome"}</span>
         </p>
       </div>
 
