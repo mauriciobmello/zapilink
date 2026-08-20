@@ -24,10 +24,20 @@ export default async function CrmCustomersPage({
         >
           ← Visão Geral
         </Link>
-        <h1 className="mt-2 text-2xl font-bold text-gray-900">CRM — Clientes</h1>
-        <p className="mt-1 text-sm text-gray-500">
-          {customers.length} cliente(s) cadastrado(s).
-        </p>
+        <div className="mt-4 flex gap-3">
+          <Link
+            href={`/dashboard/crm/customers/new?profileId=${encodeURIComponent(profile.id)}`}
+            className="flex h-12 items-center justify-center rounded-card bg-[#7C3AED] px-4 font-medium text-white transition-colors hover:brightness-110"
+          >
+            Novo cliente
+          </Link>
+          <Link
+            href={`/dashboard/crm/import?profileId=${encodeURIComponent(profile.id)}`}
+            className="flex h-12 items-center justify-center rounded-card border border-gray-200 bg-white px-4 font-medium text-gray-700 transition-colors hover:bg-gray-50"
+          >
+            Importar CSV
+          </Link>
+        </div>
       </div>
 
       <CustomerList profileId={profile.id} initialCustomers={customers} />
