@@ -71,9 +71,12 @@ export default async function ModulesSettingsPage({
         <h1 className="mt-2 text-2xl font-bold text-gray-900">
           Habilitar módulos
         </h1>
-        <p className="mt-1 text-sm text-gray-500">
-          Perfil: <span className="font-medium text-gray-900">{data.name || "Sem nome"}</span>
-        </p>
+        <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-[#7C3AED]/20 bg-[#7C3AED]/10 px-3 py-1">
+          <span className="text-sm text-[#7C3AED]">Perfil:</span>
+          <span className="font-semibold text-[#7C3AED]">
+            {data.name || "Sem nome"}
+          </span>
+        </div>
       </div>
 
       <ModulesSettingsForm
