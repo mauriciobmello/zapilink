@@ -169,7 +169,7 @@ export default function DashboardPage() {
           )}
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid gap-6 lg:grid-cols-[30%_1fr]">
           {/* Primeira coluna: Dados da conta */}
           <div className="space-y-4">
             <div className="rounded-card border border-gray-100 bg-white p-6 shadow-card">

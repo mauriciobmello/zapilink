@@ -195,17 +195,21 @@ export default function ProfileListManager({
                   Atual
                 </span>
               )}
-              <button
-                onClick={() => {
-                  if (onProfileSelect) {
-                    onProfileSelect(profile, profile.access);
-                  }
-                  window.location.href = `/dashboard/edit?profileId=${profile.id}`;
-                }}
+              <Link
+                href={`/dashboard/edit?profileId=${profile.id}`}
+                onClick={() => onProfileSelect?.(profile, profile.access)}
                 className="rounded-card border border-[#7C3AED] bg-purple-50 px-3 py-1.5 text-sm font-medium text-[#7C3AED] transition-colors hover:bg-purple-100"
               >
                 {showOwnerInfo ? "Administrar" : "Editar"}
-              </button>
+              </Link>
+              {!showOwnerInfo && (
+                <Link
+                  href={`/dashboard/settings/modules?profileId=${profile.id}`}
+                  className="rounded-card border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:border-[#7C3AED] hover:text-[#7C3AED]"
+                >
+                  Módulos
+                </Link>
+              )}
               {!showOwnerInfo && (
                 <button
                   onClick={() => {
