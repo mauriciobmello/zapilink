@@ -153,6 +153,14 @@ export default function DashboardPage() {
           >
             {publicUrl}
           </a>
+          {!isDelegated && (
+            <Link
+              href={`/dashboard/settings/modules?profileId=${encodeURIComponent(currentProfile.id)}`}
+              className="mt-4 inline-flex items-center rounded-card border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+            >
+              Habilitar módulos
+            </Link>
+          )}
           {isDelegated && (
             <div className="mt-4 rounded-card bg-blue-50 p-3 text-sm text-blue-700">
               <p className="font-medium">Você está administrando esta página</p>

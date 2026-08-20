@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import AuthGuard from "@/components/shared/AuthGuard";
@@ -8,19 +8,32 @@ import Logo from "@/components/shared/Logo";
 import LogoutButton from "@/components/dashboard/LogoutButton";
 import ProfileSwitcher from "@/components/dashboard/ProfileSwitcher";
 
-const NAV_LINKS = [
-  { href: "/dashboard", label: "Visão Geral" },
-  { href: "/dashboard/edit", label: "Editar Perfil" },
-  { href: "/dashboard/schedule", label: "Agenda" },
-  { href: "/dashboard/loyalty", label: "Fidelidade" },
-  { href: "/dashboard/crm", label: "CRM" },
-  { href: "/dashboard/preview", label: "Preview" },
+const MODULE_LINKS = [
+  { href: "/dashboard", label: "Visão Geral", module: null },
+  { href: "/dashboard/edit", label: "Editar Perfil", module: "edit" },
+  { href: "/dashboard/schedule", label: "Agenda", module: "schedule" },
+  { href: "/dashboard/loyalty", label: "Fidelidade", module: "loyalty" },
+  { href: "/dashboard/crm", label: "CRM", module: "crm" },
+  { href: "/dashboard/preview", label: "Preview", module: null },
 ];
 
 function DashboardNav() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const profileId = searchParams.get("profileId");
+  const [enabled, setEnabled] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!profileId) return;
+    fetch(`/api/profiles/${profileId}/modules`)
+      .then((res) => res.json())
+      .then((data) => setEnabled(data.enabled ?? []))
+      .catch(() => setEnabled([]));
+  }, [profileId]);
+
+  const navLinks = MODULE_LINKS.filter(
+    (link) => !link.module || enabled.includes(link.module),
+  );
 
   const navHref = (href: string) =>
     profileId ? `${href}?profileId=${encodeURIComponent(profileId)}` : href;
@@ -30,7 +43,8 @@ function DashboardNav() {
                           pathname === "/dashboard/schedule" ||
                           pathname === "/dashboard/preview" ||
                           pathname.startsWith("/dashboard/loyalty") ||
-                          pathname.startsWith("/dashboard/crm");
+                          pathname.startsWith("/dashboard/crm") ||
+                          pathname.startsWith("/dashboard/settings");
 
   return (
     <nav className="border-b border-gray-100 bg-white">
@@ -40,7 +54,7 @@ function DashboardNav() {
         </Link>
         {showNavElements && (
           <div className="flex flex-wrap items-center gap-1">
-            {NAV_LINKS.map((link) => (
+            {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={navHref(link.href)}
