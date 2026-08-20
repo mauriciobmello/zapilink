@@ -49,8 +49,7 @@ create table if not exists public.customer_tags (
   status varchar(20) not null default 'active'
     check (status in ('active', 'inactive')),
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now(),
-  unique (profile_id, lower(name))
+  updated_at timestamptz not null default now()
 );
 
 -- Relação N:N entre clientes e tags.
@@ -119,6 +118,8 @@ create index if not exists idx_customers_vip
 
 create index if not exists idx_customer_tags_profile
   on public.customer_tags (profile_id);
+create unique index if not exists idx_customer_tags_profile_name
+  on public.customer_tags (profile_id, lower(name));
 create index if not exists idx_customer_tag_relations_customer
   on public.customer_tag_relations (customer_id);
 create index if not exists idx_customer_tag_relations_tag
