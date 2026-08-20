@@ -40,6 +40,17 @@ export async function POST(request: Request, { params }: RouteParams) {
       .maybeSingle();
     if (!tag) throw new CrmError("Tag não encontrada.", 404);
 
+    const { data: existingRelation } = await admin
+      .from("customer_tag_relations")
+      .select("id")
+      .eq("customer_id", id)
+      .eq("tag_id", tagId)
+      .eq("profile_id", profileId)
+      .maybeSingle();
+    if (existingRelation) {
+      return NextResponse.json({ ok: true });
+    }
+
     const { error } = await admin
       .from("customer_tag_relations")
       .insert({ profile_id: profileId, customer_id: id, tag_id: tagId });

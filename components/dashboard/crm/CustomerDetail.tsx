@@ -42,6 +42,7 @@ export default function CustomerDetail({
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<(typeof TABS)[number]>("Resumo");
   const [loading, setLoading] = useState(false);
+  const [tagLoading, setTagLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [tags, setTags] = useState<CustomerTag[]>(customer.tags ?? []);
@@ -124,6 +125,8 @@ export default function CustomerDetail({
   }
 
   async function addTag(tagId: string) {
+    if (tagLoading) return;
+    setTagLoading(true);
     setError(null);
     try {
       const res = await fetch(`/api/crm/customers/${customer.id}/tags`, {
@@ -140,6 +143,8 @@ export default function CustomerDetail({
       if (tag) setTags((prev) => [...prev, tag]);
     } catch {
       setError("Falha de conexão.");
+    } finally {
+      setTagLoading(false);
     }
   }
 
@@ -162,7 +167,8 @@ export default function CustomerDetail({
   }
 
   async function createTag() {
-    if (!newTagName.trim()) return;
+    if (!newTagName.trim() || tagLoading) return;
+    setTagLoading(true);
     setError(null);
     try {
       const res = await fetch("/api/crm/tags", {
@@ -180,6 +186,8 @@ export default function CustomerDetail({
       setNewTagName("");
     } catch {
       setError("Falha de conexão.");
+    } finally {
+      setTagLoading(false);
     }
   }
 
@@ -245,8 +253,9 @@ export default function CustomerDetail({
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <select
                 value=""
+                disabled={tagLoading}
                 onChange={(e) => e.target.value && addTag(e.target.value)}
-                className="h-9 rounded-card border border-gray-200 bg-white px-2 text-sm outline-none focus:border-[#7C3AED]"
+                className="h-9 rounded-card border border-gray-200 bg-white px-2 text-sm outline-none focus:border-[#7C3AED] disabled:opacity-60"
               >
                 <option value="">+ Adicionar tag</option>
                 {availableTags.map((tag) => (
@@ -258,12 +267,14 @@ export default function CustomerDetail({
               <input
                 value={newTagName}
                 onChange={(e) => setNewTagName(e.target.value)}
+                disabled={tagLoading}
                 placeholder="Nova tag"
-                className="h-9 w-32 rounded-card border border-gray-200 px-2 text-sm outline-none focus:border-[#7C3AED]"
+                className="h-9 w-32 rounded-card border border-gray-200 px-2 text-sm outline-none focus:border-[#7C3AED] disabled:opacity-60"
               />
               <button
                 onClick={createTag}
-                className="h-9 rounded-card bg-[#7C3AED] px-3 text-sm font-medium text-white hover:brightness-110"
+                disabled={tagLoading}
+                className="h-9 rounded-card bg-[#7C3AED] px-3 text-sm font-medium text-white hover:brightness-110 disabled:opacity-60"
               >
                 Criar
               </button>
