@@ -40,7 +40,18 @@ export default async function ModulesSettingsPage({
     .eq("id", profileId)
     .maybeSingle();
 
-  if (error || !data) {
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold text-gray-900">Habilitar módulos</h1>
+        <p className="rounded-card bg-red-50 px-3 py-2 text-sm text-red-700">
+          Erro ao carregar o perfil: {error.message}. Verifique se a migration 005 foi aplicada.
+        </p>
+      </div>
+    );
+  }
+
+  if (!data) {
     notFound();
   }
 
