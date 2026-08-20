@@ -40,7 +40,7 @@ export default async function CrmCustomerDetailPage({
 
       <CustomerDetail
         profileId={profile.id}
-        customer={customer}
+        initialCustomer={customer}
         loyalty={loyalty}
       />
     </div>

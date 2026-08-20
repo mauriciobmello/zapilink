@@ -3,7 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { requireCrmAdmin, getCustomer, CrmError } from "@/lib/crm/server";
 import { crmErrorResponse, readJsonBody, readString, readOptionalString } from "@/lib/crm/http";
 import { normalizePhone } from "@/lib/crm/format";
-import type { Customer } from "@/types/crm";
+import type { Customer, CustomerSummary } from "@/types/crm";
 
 export const dynamic = "force-dynamic";
 
@@ -74,7 +74,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       throw new CrmError("Cliente não encontrado.", 404);
     }
 
-    const { data: customer, error } = await admin
+    const { data: updatedCustomer, error } = await admin
       .from("customers")
       .update(updates)
       .eq("id", id)
@@ -82,7 +82,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       .select()
       .single();
 
-    if (error || !customer) {
+    if (error || !updatedCustomer) {
       return NextResponse.json(
         { error: error?.message ?? "Não foi possível atualizar o cliente." },
         { status: 400 },
@@ -97,7 +97,24 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       p_description: "Cliente atualizado no CRM",
     });
 
-    return NextResponse.json({ customer: customer as Customer });
+    const { data: relations } = await admin
+      .from("customer_tag_relations")
+      .select("tag_id")
+      .eq("customer_id", id);
+    const tagIds = (relations ?? []).map((r) => r.tag_id);
+    const { data: tags } = tagIds.length
+      ? await admin
+          .from("customer_tags")
+          .select("*")
+          .in("id", tagIds)
+      : { data: [] };
+
+    const customer: CustomerSummary = {
+      ...(updatedCustomer as Customer),
+      tags: (tags ?? []) as CustomerSummary["tags"],
+    };
+
+    return NextResponse.json({ customer });
   } catch (error) {
     return crmErrorResponse(error);
   }

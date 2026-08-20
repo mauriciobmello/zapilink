@@ -3,13 +3,14 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatPhone, formatCurrency } from "@/lib/crm/format";
+import CustomerEditForm from "./CustomerEditForm";
 import type { CustomerSummary, CustomerTag, CustomerNote, CustomerEvent } from "@/types/crm";
 import type { CustomerLoyaltyInfo } from "@/lib/crm/server";
 import type { Booking } from "@/types/schedule";
 
 interface CustomerDetailProps {
   profileId: string;
-  customer: CustomerSummary;
+  initialCustomer: CustomerSummary;
   loyalty: CustomerLoyaltyInfo | null;
 }
 
@@ -36,7 +37,7 @@ const EVENT_ICONS: Record<string, string> = {
 
 export default function CustomerDetail({
   profileId,
-  customer,
+  initialCustomer,
   loyalty,
 }: CustomerDetailProps) {
   const router = useRouter();
@@ -44,8 +45,10 @@ export default function CustomerDetail({
   const [loading, setLoading] = useState(false);
   const [tagLoading, setTagLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [customerData, setCustomerData] = useState<CustomerSummary>(initialCustomer);
 
-  const [tags, setTags] = useState<CustomerTag[]>(customer.tags ?? []);
+  const [tags, setTags] = useState<CustomerTag[]>(initialCustomer.tags ?? []);
   const [allTags, setAllTags] = useState<CustomerTag[]>([]);
   const [newTagName, setNewTagName] = useState("");
 
@@ -59,7 +62,7 @@ export default function CustomerDetail({
     if (activeTab === "Observações") loadNotes();
     if (activeTab === "Histórico") loadEvents();
     if (activeTab === "Agenda") loadAppointments();
-  }, [activeTab, customer.id, profileId]);
+  }, [activeTab, customerData.id, profileId]);
 
   useEffect(() => {
     loadAllTags();
@@ -76,7 +79,7 @@ export default function CustomerDetail({
   async function loadNotes() {
     try {
       const res = await fetch(
-        `/api/crm/customers/${customer.id}/notes?profileId=${encodeURIComponent(profileId)}`,
+        `/api/crm/customers/${customerData.id}/notes?profileId=${encodeURIComponent(profileId)}`,
       );
       const data = await res.json();
       if (res.ok) setNotes(data.notes ?? []);
@@ -86,7 +89,7 @@ export default function CustomerDetail({
   async function loadEvents() {
     try {
       const res = await fetch(
-        `/api/crm/customers/${customer.id}/events?profileId=${encodeURIComponent(profileId)}`,
+        `/api/crm/customers/${customerData.id}/events?profileId=${encodeURIComponent(profileId)}`,
       );
       const data = await res.json();
       if (res.ok) setEvents(data.events ?? []);
@@ -96,7 +99,7 @@ export default function CustomerDetail({
   async function loadAppointments() {
     try {
       const res = await fetch(
-        `/api/crm/customers/${customer.id}/appointments?profileId=${encodeURIComponent(profileId)}`,
+        `/api/crm/customers/${customerData.id}/appointments?profileId=${encodeURIComponent(profileId)}`,
       );
       const data = await res.json();
       if (res.ok) setAppointments(data.appointments ?? []);
@@ -108,7 +111,7 @@ export default function CustomerDetail({
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`/api/crm/customers/${customer.id}`, {
+      const response = await fetch(`/api/crm/customers/${customerData.id}`, {
         method: "DELETE",
       });
       const data = await response.json();
@@ -129,7 +132,7 @@ export default function CustomerDetail({
     setTagLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/crm/customers/${customer.id}/tags`, {
+      const res = await fetch(`/api/crm/customers/${customerData.id}/tags`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ profileId, tagId }),
@@ -152,7 +155,7 @@ export default function CustomerDetail({
     setError(null);
     try {
       const res = await fetch(
-        `/api/crm/customers/${customer.id}/tags?profileId=${encodeURIComponent(profileId)}&tagId=${encodeURIComponent(tagId)}`,
+        `/api/crm/customers/${customerData.id}/tags?profileId=${encodeURIComponent(profileId)}&tagId=${encodeURIComponent(tagId)}`,
         { method: "DELETE" },
       );
       if (!res.ok) {
@@ -195,7 +198,7 @@ export default function CustomerDetail({
     if (!newNote.trim()) return;
     setError(null);
     try {
-      const res = await fetch(`/api/crm/customers/${customer.id}/notes`, {
+      const res = await fetch(`/api/crm/customers/${customerData.id}/notes`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ profileId, content: newNote.trim() }),
@@ -219,21 +222,21 @@ export default function CustomerDetail({
       <div className="rounded-card bg-white p-6 shadow-card">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">{customer.name}</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{customerData.name}</h1>
             <p className="mt-1 text-sm text-gray-500">
-              {formatPhone(customer.phone)}
-              {customer.email && ` · ${customer.email}`}
+              {formatPhone(customerData.phone)}
+              {customerData.email && ` · ${customerData.email}`}
             </p>
             <div className="mt-2 flex flex-wrap gap-2">
-              {customer.is_vip && (
+              {customerData.is_vip && (
                 <span className="rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-700">
                   VIP
                 </span>
               )}
               <span
-                className={`rounded-full px-2 py-0.5 text-xs font-medium ${customer.status === "active" ? "bg-green-100 text-green-700" : customer.status === "inactive" ? "bg-red-100 text-red-700" : "bg-gray-100 text-gray-700"}`}
+                className={`rounded-full px-2 py-0.5 text-xs font-medium ${customerData.status === "active" ? "bg-green-100 text-green-700" : customerData.status === "inactive" ? "bg-red-100 text-red-700" : "bg-gray-100 text-gray-700"}`}
               >
-                {STATUS_LABEL[customer.status] ?? customer.status}
+                {STATUS_LABEL[customerData.status] ?? customerData.status}
               </span>
               {tags.map((tag) => (
                 <span
@@ -280,13 +283,21 @@ export default function CustomerDetail({
               </button>
             </div>
           </div>
-          <button
-            onClick={handleInactivate}
-            disabled={loading}
-            className="rounded-card border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-50 disabled:opacity-60"
-          >
-            {loading ? "Processando..." : "Inativar"}
-          </button>
+          <div className="flex flex-col gap-2">
+            <button
+              onClick={() => setIsEditing(true)}
+              className="rounded-card bg-[#7C3AED] px-4 py-2 text-sm font-medium text-white transition-colors hover:brightness-110"
+            >
+              Editar
+            </button>
+            <button
+              onClick={handleInactivate}
+              disabled={loading}
+              className="rounded-card border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-50 disabled:opacity-60"
+            >
+              {loading ? "Processando..." : "Inativar"}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -294,6 +305,19 @@ export default function CustomerDetail({
         <p className="rounded-card bg-red-50 px-3 py-2 text-sm text-red-700">
           {error}
         </p>
+      )}
+
+      {isEditing && (
+        <CustomerEditForm
+          profileId={profileId}
+          customer={customerData}
+          onSaved={(updated) => {
+            setCustomerData(updated);
+            setTags(updated.tags ?? []);
+            setIsEditing(false);
+          }}
+          onCancel={() => setIsEditing(false)}
+        />
       )}
 
       <div className="border-b border-gray-200">
@@ -312,36 +336,36 @@ export default function CustomerDetail({
 
       {activeTab === "Resumo" && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <MetricCard label="Total gasto" value={formatCurrency(customer.total_spent)} />
-          <MetricCard label="Ticket médio" value={formatCurrency(customer.average_ticket)} />
-          <MetricCard label="Compras" value={customer.purchase_count.toString()} />
-          <MetricCard label="Agendamentos" value={customer.appointment_count.toString()} />
-          <MetricCard label="Frequência" value={`${customer.purchase_frequency.toFixed(1)}x/mês`} />
-          <MetricCard label="Fidelidade" value={`${customer.loyalty_points} pontos`} />
-          <MetricCard label="Última interação" value={formatDate(customer.last_interaction_at)} />
-          <MetricCard label="Cliente desde" value={formatDate(customer.created_at)} />
+          <MetricCard label="Total gasto" value={formatCurrency(customerData.total_spent)} />
+          <MetricCard label="Ticket médio" value={formatCurrency(customerData.average_ticket)} />
+          <MetricCard label="Compras" value={customerData.purchase_count.toString()} />
+          <MetricCard label="Agendamentos" value={customerData.appointment_count.toString()} />
+          <MetricCard label="Frequência" value={`${customerData.purchase_frequency.toFixed(1)}x/mês`} />
+          <MetricCard label="Fidelidade" value={`${customerData.loyalty_points} pontos`} />
+          <MetricCard label="Última interação" value={formatDate(customerData.last_interaction_at)} />
+          <MetricCard label="Cliente desde" value={formatDate(customerData.created_at)} />
         </div>
       )}
 
       {activeTab === "Dados" && (
         <div className="rounded-card bg-white p-6 shadow-card">
           <dl className="grid gap-4 sm:grid-cols-2">
-            <DataItem label="Nome" value={customer.name} />
-            <DataItem label="Telefone" value={formatPhone(customer.phone)} />
-            <DataItem label="E-mail" value={customer.email} />
-            <DataItem label="CPF" value={customer.cpf} />
-            <DataItem label="Nascimento" value={formatDate(customer.birth_date)} />
-            <DataItem label="Gênero" value={customer.gender} />
-            <DataItem label="Origem" value={customer.origin} />
-            <DataItem label="Cidade" value={customer.city} />
-            <DataItem label="Profissão" value={customer.profession} />
-            <DataItem label="Empresa" value={customer.company} />
+            <DataItem label="Nome" value={customerData.name} />
+            <DataItem label="Telefone" value={formatPhone(customerData.phone)} />
+            <DataItem label="E-mail" value={customerData.email} />
+            <DataItem label="CPF" value={customerData.cpf} />
+            <DataItem label="Nascimento" value={formatDate(customerData.birth_date)} />
+            <DataItem label="Gênero" value={customerData.gender} />
+            <DataItem label="Origem" value={customerData.origin} />
+            <DataItem label="Cidade" value={customerData.city} />
+            <DataItem label="Profissão" value={customerData.profession} />
+            <DataItem label="Empresa" value={customerData.company} />
           </dl>
-          {customer.notes && (
+          {customerData.notes && (
             <div className="mt-4">
               <dt className="text-sm font-medium text-gray-500">Observações</dt>
               <dd className="mt-1 whitespace-pre-wrap text-sm text-gray-900">
-                {customer.notes}
+                {customerData.notes}
               </dd>
             </div>
           )}
@@ -349,7 +373,7 @@ export default function CustomerDetail({
       )}
 
       {activeTab === "Fidelidade" && (
-        <LoyaltyTab customer={customer} loyalty={loyalty} />
+        <LoyaltyTab customerData={customerData} loyalty={loyalty} />
       )}
 
       {activeTab === "Agenda" && (
@@ -373,10 +397,10 @@ export default function CustomerDetail({
 }
 
 function LoyaltyTab({
-  customer,
+  customerData,
   loyalty,
 }: {
-  customer: CustomerSummary;
+  customerData: CustomerSummary;
   loyalty: CustomerLoyaltyInfo | null;
 }) {
   if (!loyalty || !loyalty.program) {
